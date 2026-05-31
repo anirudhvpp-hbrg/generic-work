@@ -59,6 +59,59 @@ def test_storage_persists_to_disk(tmp_path):
     assert reloaded.get("k") == {"v": 1}
 
 
+def test_storage_auto_persists_on_write(tmp_path):
+    path = str(tmp_path / "auto.json")
+    s = StorageManager(path)          # auto_persist defaults on
+    s.put("k", {"v": 1})              # no explicit persist() call
+    assert StorageManager(path).get("k") == {"v": 1}
+    s.delete("k")                     # delete is durable too
+    assert StorageManager(path).get("k") is None
+
+
+def test_storage_write_is_atomic(tmp_path):
+    # A real file is left after replace; no leftover .tmp files in the dir.
+    path = str(tmp_path / "atomic.json")
+    s = StorageManager(path)
+    s.put("a", 1)
+    leftovers = [p for p in os.listdir(tmp_path) if p.endswith(".tmp")]
+    assert leftovers == []
+    assert os.path.exists(path)
+
+
+def test_memory_durable_across_restart(tmp_path):
+    path = str(tmp_path / "mem.json")
+    storage = StorageManager(path)
+    mem = MemoryManager(capacity=8, storage=storage)
+    mem.write("commercial:0", "retention dipped after the v2 onboarding change")
+    mem.write("research:0", "evidence chain for the billing migration")
+
+    # Simulate a fresh process: new managers on the same path rehydrate.
+    mem2 = MemoryManager(capacity=8, storage=StorageManager(path))
+    assert len(mem2) == 2
+    assert mem2.read("commercial:0")["text"].startswith("retention dipped")
+
+
+def test_memory_search_ranks_by_overlap():
+    mem = MemoryManager(capacity=8)
+    mem.write("a", "retention dropped after onboarding friction")
+    mem.write("b", "billing migration evidence chain")
+    hits = mem.search("why did retention drop", k=2)
+    assert hits
+    assert hits[0][0] == "a"          # most relevant first
+    assert hits[0][2] > 0
+
+
+def test_kernel_durable_storage_survives_new_instance(tmp_path):
+    path = str(tmp_path / "kernel.json")
+    k1 = Kernel(llm=MockLLM(handler=lambda s, u: "x"), storage_path=path)
+    k1.access.grant("agent", "memory:write")
+    k1.syscall("agent", "mem.write", key="note:0", text="durable fact stored")
+
+    k2 = Kernel(llm=MockLLM(handler=lambda s, u: "x"), storage_path=path)
+    assert len(k2.memory) == 1
+    assert k2.memory.read("note:0")["text"] == "durable fact stored"
+
+
 def test_memory_manager_evicts_lru():
     m = MemoryManager(capacity=2)
     m.write("a", "A")

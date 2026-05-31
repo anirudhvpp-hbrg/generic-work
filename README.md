@@ -69,7 +69,7 @@ tools* and enforces per-agent access. Shadow OS runs **on** this kernel.
 | LLM Core | `kernel/llm_core.py` | One shared model across agents, with usage accounting |
 | Scheduler | `kernel/scheduler.py` | Priority ordering of dispatched agent jobs |
 | Context Manager | `kernel/context.py` | Snapshot / restore an agent's loop state on context-switch |
-| Storage + Memory | `kernel/storage.py` | JSON-persistable store + LRU-bounded memory |
+| Storage + Memory | `kernel/storage.py` | **Durable** atomic-write store + LRU memory with semantic search |
 | Tool Manager | `kernel/tools.py` | Unified tool registry the Action stage calls into |
 | Access Manager | `kernel/access.py` | Per-agent permissions |
 
@@ -95,9 +95,28 @@ snapshotted, and shipped output is persisted to kernel memory. The concrete
 access example is enforced: the commercial agent (Aegis) may touch pipeline
 data, the personal agent (Ira) may not.
 
-This turns the stack from a cognitive layer alone into a cognitive layer running
-on a real (if in-process) resource kernel. Backing the managers with durable
-infrastructure (disk/vector DB, true preemption) is the remaining step.
+### Durable storage
+
+Give the kernel a `storage_path` and the resource layer is durable: every write
+is flushed to disk atomically (temp file + `os.replace`, crash-safe), and a fresh
+kernel on the same path rehydrates its memory. Memory also supports
+dependency-free semantic `search` (token-overlap) — a stand-in a real embedding
+backend can replace without changing callers.
+
+```python
+from kernel import Kernel
+from shadow_os import Monarch
+
+k1 = Kernel(storage_path="state.json")
+Monarch(kernel=k1).run("research why retention dropped")
+
+k2 = Kernel(storage_path="state.json")     # new process, same path
+len(k2.memory)                             # rehydrated from disk
+k2.memory.search("retention drop")         # [(key, record, score), ...]
+```
+
+Remaining kernel work: a true vector backend for `search`, and preemptive
+concurrency in the scheduler.
 
 ---
 

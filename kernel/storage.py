@@ -1,45 +1,78 @@
-"""Storage Manager + Memory Manager — the persistence tier.
+"""Storage Manager + Memory Manager — the durable persistence tier.
 
 This is infrastructure: where bytes live, how they persist, and what gets
 evicted. It is distinct from the cognitive engine's semantic Memory (what
-context matters) — the engine's Memory stage would be *backed by* this.
+context matters) — the engine's Memory stage is *backed by* this.
 
-- ``StorageManager`` is a key-value store with optional JSON persistence to disk.
-- ``MemoryManager`` adds a capacity bound with LRU eviction, backed by storage.
+- ``StorageManager`` — key-value store. When given a ``path`` it is durable:
+  every write is flushed to disk atomically (temp file + ``os.replace``), so a
+  new manager pointed at the same path resumes the prior state and a crash
+  mid-write cannot corrupt the file.
+- ``MemoryManager`` — capacity-bounded memory with LRU eviction, backed by the
+  storage manager. It rehydrates from disk on startup and offers dependency-free
+  semantic ``search`` (token-overlap) over stored text — a durable stand-in for
+  a vector store that a real embedding backend can later replace.
 """
 
 from __future__ import annotations
 
 import json
 import os
+import re
+import tempfile
 from collections import OrderedDict
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
+
+# Reserved key prefix so memory records never collide with arbitrary kv entries.
+_MEM_PREFIX = "mem::"
+_TOKEN = re.compile(r"[a-z0-9]+")
 
 
 class StorageManager:
-    def __init__(self, path: Optional[str] = None) -> None:
+    def __init__(self, path: Optional[str] = None, auto_persist: bool = True) -> None:
         self.path = path
+        self.auto_persist = auto_persist
         self._data: Dict[str, Any] = {}
         if path and os.path.exists(path):
             self.load()
 
     def put(self, key: str, value: Any) -> None:
         self._data[key] = value
+        self._maybe_persist()
 
     def get(self, key: str, default: Any = None) -> Any:
         return self._data.get(key, default)
 
     def delete(self, key: str) -> None:
-        self._data.pop(key, None)
+        if key in self._data:
+            del self._data[key]
+            self._maybe_persist()
 
     def keys(self) -> List[str]:
         return list(self._data.keys())
 
+    def items(self) -> List[Tuple[str, Any]]:
+        return list(self._data.items())
+
+    def _maybe_persist(self) -> None:
+        if self.auto_persist and self.path:
+            self.persist()
+
     def persist(self) -> None:
+        """Atomic write: serialize to a temp file in the same dir, then replace."""
         if not self.path:
             return
-        with open(self.path, "w") as fh:
-            json.dump(self._data, fh)
+        directory = os.path.dirname(os.path.abspath(self.path))
+        os.makedirs(directory, exist_ok=True)
+        fd, tmp = tempfile.mkstemp(dir=directory, suffix=".tmp")
+        try:
+            with os.fdopen(fd, "w") as fh:
+                json.dump(self._data, fh)
+            os.replace(tmp, self.path)   # atomic on POSIX and Windows
+        except BaseException:
+            if os.path.exists(tmp):
+                os.unlink(tmp)
+            raise
 
     def load(self) -> None:
         if self.path and os.path.exists(self.path):
@@ -48,30 +81,77 @@ class StorageManager:
 
 
 class MemoryManager:
-    """Capacity-bounded store with LRU eviction, backed by a StorageManager."""
+    """Capacity-bounded, durable memory with LRU eviction and semantic search."""
 
     def __init__(self, capacity: int = 128, storage: Optional[StorageManager] = None) -> None:
         self.capacity = max(1, capacity)
         self.storage = storage or StorageManager()
         self._lru: "OrderedDict[str, Dict[str, Any]]" = OrderedDict()
         self.evicted: List[str] = []
+        self._seq = 0
+        self._rehydrate()
+
+    # --- durability --------------------------------------------------------
+
+    def _rehydrate(self) -> None:
+        """Rebuild the LRU from any memory records already in storage."""
+        records = [
+            (k[len(_MEM_PREFIX):], v)
+            for k, v in self.storage.items()
+            if k.startswith(_MEM_PREFIX)
+        ]
+        # Restore recency order via the persisted sequence number.
+        records.sort(key=lambda kv: kv[1].get("seq", 0))
+        for key, record in records:
+            self._lru[key] = record
+            self._seq = max(self._seq, record.get("seq", 0) + 1)
+        self._enforce_capacity()
+
+    def _enforce_capacity(self) -> None:
+        while len(self._lru) > self.capacity:
+            old_key, _ = self._lru.popitem(last=False)
+            self.storage.delete(_MEM_PREFIX + old_key)
+            self.evicted.append(old_key)
+
+    # --- writes / reads ----------------------------------------------------
 
     def write(self, key: str, text: str, meta: Optional[Dict[str, Any]] = None) -> None:
-        record = {"text": text, "meta": meta or {}}
+        record = {"text": text, "meta": meta or {}, "seq": self._seq}
+        self._seq += 1
         if key in self._lru:
             self._lru.move_to_end(key)
         self._lru[key] = record
-        self.storage.put(key, record)
-        while len(self._lru) > self.capacity:
-            old_key, _ = self._lru.popitem(last=False)
-            self.storage.delete(old_key)
-            self.evicted.append(old_key)
+        self.storage.put(_MEM_PREFIX + key, record)   # durable when storage has a path
+        self._enforce_capacity()
 
     def read(self, key: str) -> Optional[Dict[str, Any]]:
         if key not in self._lru:
             return None
         self._lru.move_to_end(key)
         return self._lru[key]
+
+    # --- retrieval ---------------------------------------------------------
+
+    def search(self, query: str, k: int = 3) -> List[Tuple[str, Dict[str, Any], float]]:
+        """Token-overlap relevance search. Returns up to ``k`` (key, record, score).
+
+        Dependency-free stand-in for vector retrieval: scores by the fraction of
+        query tokens present in each record's text. A real embedding backend can
+        replace this method without changing callers.
+        """
+        q = set(_TOKEN.findall(query.lower()))
+        if not q:
+            return []
+        scored = []
+        for key, record in self._lru.items():
+            tokens = set(_TOKEN.findall(record["text"].lower()))
+            if not tokens:
+                continue
+            overlap = len(q & tokens) / len(q)
+            if overlap > 0:
+                scored.append((key, record, round(overlap, 3)))
+        scored.sort(key=lambda t: t[2], reverse=True)
+        return scored[:k]
 
     def __len__(self) -> int:
         return len(self._lru)

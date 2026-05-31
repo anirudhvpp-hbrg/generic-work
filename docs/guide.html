@@ -327,9 +327,10 @@ monarch = Monarch(llm=CallableLLM(my_model))</pre>
   <h2 id="next">Next steps</h2>
   <p class="lead">What's built is the full cognitive engine on an in-process kernel, with 43 passing tests. From here:</p>
   <div class="next">
-    <div class="nx"><span class="pri now">do next</span><h4>CI + ready for review</h4><p>Add a GitHub Actions workflow running <code class="inline">pytest</code> so PR #1 has real checks, then mark it ready.</p></div>
-    <div class="nx"><span class="pri soon">soon</span><h4>Durable kernel storage</h4><p>Back Storage/Memory with disk + a vector store for real retrieval (the spec's ChromaDB phase). Today it's in-process.</p></div>
+    <div class="nx"><span class="pri" style="color:var(--core);border:1px solid rgba(90,214,160,.4);padding:2px 8px;border-radius:999px">done</span><h4>CI + ready for review</h4><p>GitHub Actions runs <code class="inline">pytest</code> on 3.10 + 3.11; PR #1 is open for review.</p></div>
+    <div class="nx"><span class="pri" style="color:var(--core);border:1px solid rgba(90,214,160,.4);padding:2px 8px;border-radius:999px">done</span><h4>Durable kernel storage</h4><p>Atomic-write disk persistence + rehydrate-on-restart + token-overlap semantic search. A real vector backend can replace <code class="inline">search</code> without changing callers.</p></div>
     <div class="nx"><span class="pri soon">soon</span><h4>Real LLM adapter</h4><p>Ship a Claude adapter for <code class="inline">CallableLLM</code> with prompt caching, so reasoning runs against a live model.</p></div>
+    <div class="nx"><span class="pri soon">soon</span><h4>Vector retrieval backend</h4><p>Swap the token-overlap <code class="inline">search</code> for real embeddings (the spec's ChromaDB phase) — interface already isolated.</p></div>
     <div class="nx"><span class="pri later">later</span><h4>True preemptive scheduling</h4><p>Move from priority-ordered execution to real concurrency + preemption when multiple shadows are independent.</p></div>
     <div class="nx"><span class="pri later">later</span><h4>Deepen Reasoning per shadow</h4><p>Encode each shadow's mental models &amp; modes (e.g. Thresher's two-phase compression, Aegis's signature moves) beyond the shared prompt.</p></div>
     <div class="nx"><span class="pri later">later</span><h4>Open decisions</h4><p>Confirm Ira stays personal-only; define the evidence threshold to ever re-add a deleted capability.</p></div>

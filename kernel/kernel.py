@@ -49,6 +49,8 @@ class Kernel:
             return self.memory.write(kw["key"], kw["text"], kw.get("meta"))
         if name == "mem.read":
             return self.memory.read(kw["key"])
+        if name == "mem.search":
+            return self.memory.search(kw["query"], kw.get("k", 3))
         if name == "tool.call":
             return self.tools.call(agent_id, kw["tool"], self.access, *kw.get("args", ()), **kw.get("kwargs", {}))
         if name == "ctx.snapshot":

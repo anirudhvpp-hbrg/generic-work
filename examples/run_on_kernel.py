@@ -45,6 +45,18 @@ def main() -> int:
     kernel.scheduler.run()
     print("  executed:", kernel.scheduler.history)
 
+    # Durable storage: a second kernel on the same path resumes prior memory.
+    import tempfile
+    path = os.path.join(tempfile.mkdtemp(), "kernel.json")
+    print("\nDurable storage:")
+    k1 = Kernel(llm=MockLLM(handler=lambda s, u: "Retention dropped after onboarding friction."), storage_path=path)
+    Monarch(kernel=k1).run("research why retention dropped after onboarding")
+    print("  k1 memory units:", len(k1.memory))
+    k2 = Kernel(llm=MockLLM(handler=lambda s, u: "Retention dropped after onboarding friction."), storage_path=path)
+    print("  k2 (fresh instance) rehydrated units:", len(k2.memory))
+    print("  semantic search 'retention drop':",
+          [hit[0] for hit in k2.memory.search("retention drop")])
+
     return 0 if task.shipped else 1
 
 
