@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Shadow OS — Guide: Architecture · Capabilities · Usage · Next Steps</title>
+<style>
+  :root{
+    --bg:#0d0f14;--panel:#161922;--panel2:#1d212c;--ink:#e8eaf0;--muted:#98a1b2;
+    --line:#2a2f3b;--gold:#d8b15a;--code:#c8d0dc;
+    --kernel:#e6915a;--engine:#9d7cf0;--prim:#5aa9e6;
+    --perc:#5aa9e6;--mem:#5ad6a0;--reas:#9d7cf0;--act:#e6915a;
+    --core:#5ad6a0;--retain:#5aa9e6;--personal:#e65a7c;--mon:#d8b15a;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:15px/1.6 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding:0 0 80px}
+  .wrap{max-width:1140px;margin:0 auto;padding:0 20px}
+
+  /* nav */
+  nav{position:sticky;top:0;background:rgba(13,15,20,.92);backdrop-filter:blur(8px);
+    border-bottom:1px solid var(--line);z-index:10}
+  nav .inner{max-width:1140px;margin:0 auto;padding:12px 20px;display:flex;gap:18px;flex-wrap:wrap;
+    align-items:center}
+  nav b{color:var(--gold);font-size:14px;margin-right:6px}
+  nav a{color:var(--muted);text-decoration:none;font-size:13px}
+  nav a:hover{color:var(--ink)}
+
+  header.hero{text-align:center;padding:48px 20px 8px}
+  h1{font-size:32px;margin:0 0 8px}
+  h1 .c{color:var(--gold)}
+  .hero p{color:var(--muted);margin:0 auto;max-width:640px}
+  .tagline{margin-top:16px;font-size:13.5px;color:var(--gold);border:1px solid var(--line);
+    border-radius:999px;display:inline-block;padding:6px 16px;background:var(--panel)}
+
+  h2{font-size:13px;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);
+    margin:52px 0 18px;font-weight:600;border-top:1px solid var(--line);padding-top:26px}
+  h3{font-size:18px;margin:22px 0 10px}
+  p.lead{color:var(--muted);margin:-6px 0 18px;max-width:760px}
+  code.inline{font-family:ui-monospace,Menlo,monospace;background:var(--panel2);
+    padding:1px 6px;border-radius:4px;color:var(--code);font-size:12.5px}
+
+  /* stack */
+  .stack{display:flex;flex-direction:column;gap:10px}
+  .tier{border:1px solid var(--line);border-left:4px solid var(--a);border-radius:10px;
+    padding:14px 18px;background:var(--panel)}
+  .tier .t{font-weight:700;font-size:15px}
+  .tier .d{color:var(--muted);font-size:13px;margin-top:3px}
+  .tier .pkg{font-family:ui-monospace,Menlo,monospace;font-size:11.5px;color:var(--a);
+    float:right;border:1px solid var(--line);border-radius:6px;padding:2px 8px}
+  .t-engine{--a:var(--engine)} .t-kernel{--a:var(--kernel)} .t-prim{--a:var(--prim)}
+  .stack .conn{text-align:center;color:var(--muted);font-size:12px;margin:-2px 0}
+
+  /* loop */
+  .loop{display:flex;align-items:stretch;flex-wrap:wrap;justify-content:center;margin-top:8px}
+  .ls{flex:1 1 180px;min-width:170px;background:var(--panel);border:1px solid var(--line);
+    border-top:3px solid var(--a);border-radius:10px;padding:14px}
+  .ls+.ar{align-self:center;color:var(--muted);font-size:20px;padding:0 6px}
+  .ls .n{font-size:10.5px;color:var(--a);font-weight:700;letter-spacing:1px}
+  .ls h4{margin:3px 0 6px;font-size:15px}
+  .ls p{margin:0;color:var(--muted);font-size:12px}
+  .s-perc{--a:var(--perc)}.s-mem{--a:var(--mem)}.s-reas{--a:var(--reas)}.s-act{--a:var(--act)}
+  .loopback{text-align:center;color:var(--muted);font-size:12.5px;margin-top:12px}
+
+  /* flow steps */
+  .flow{counter-reset:step;display:grid;gap:8px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+  .step{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px 14px;position:relative}
+  .step::before{counter-increment:step;content:counter(step);position:absolute;top:-9px;left:12px;
+    background:var(--gold);color:#1a1208;font-size:11px;font-weight:700;width:18px;height:18px;
+    border-radius:50%;display:flex;align-items:center;justify-content:center}
+  .step b{font-size:13.5px}.step span{display:block;color:var(--muted);font-size:11.5px;margin-top:3px}
+
+  /* fleet */
+  .fleet{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(330px,1fr))}
+  .shadow{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--a);
+    border-radius:10px;padding:16px}
+  .shadow .top{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+  .shadow h4{margin:0;font-size:16px}
+  .shadow .tier2{font-size:10px;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:2px 8px;white-space:nowrap}
+  .shadow .fn{color:var(--ink);font-size:12.5px;margin:7px 0}
+  .shadow .lbl{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin:9px 0 3px}
+  .shadow ul{margin:0;padding-left:16px;color:var(--muted);font-size:12px}
+  .shadow ul.guard li{color:#d8a06a}
+  .badge{font-size:10px;padding:2px 8px;border-radius:999px;display:inline-block;margin-top:9px;border:1px solid var(--line)}
+  .b-core{color:var(--core);border-color:rgba(90,214,160,.4)}
+  .b-retain{color:var(--retain);border-color:rgba(90,169,230,.4)}
+  .b-personal{color:var(--personal);border-color:rgba(230,90,124,.4)}
+  .sh-core{--a:var(--core)}.sh-retain{--a:var(--retain)}.sh-personal{--a:var(--personal)}
+
+  /* generic grid + table */
+  .grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px}
+  .card h4{margin:0 0 8px;font-size:14px;color:var(--gold)}
+  .card p{margin:0;color:var(--muted);font-size:12.5px}
+  .card .mod{font-family:ui-monospace,Menlo,monospace;font-size:11px;color:var(--kernel)}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{text-align:left;padding:8px 11px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{color:var(--muted);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.5px}
+  td b{color:var(--ink)} td code{font-family:ui-monospace,Menlo,monospace;font-size:11.5px;color:var(--code)}
+
+  /* code blocks */
+  pre{background:#0a0c11;border:1px solid var(--line);border-radius:10px;padding:15px 16px;overflow:auto;
+    font-family:ui-monospace,Menlo,monospace;font-size:12.5px;line-height:1.55;color:var(--code)}
+  pre .c{color:#6b7689}.pre .k{color:#9d7cf0}
+  .cmd{color:#5ad6a0}
+
+  /* next steps */
+  .next{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+  .nx{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:15px}
+  .nx .pri{font-size:10px;letter-spacing:.5px;text-transform:uppercase;padding:2px 8px;border-radius:999px;
+    border:1px solid var(--line);display:inline-block;margin-bottom:8px}
+  .pri.now{color:var(--core);border-color:rgba(90,214,160,.4)}
+  .pri.soon{color:var(--gold);border-color:rgba(216,177,90,.4)}
+  .pri.later{color:var(--muted)}
+  .nx h4{margin:0 0 6px;font-size:14px}
+  .nx p{margin:0;color:var(--muted);font-size:12.5px}
+
+  footer{margin-top:54px;text-align:center;color:var(--muted);font-size:12px;
+    border-top:1px solid var(--line);padding-top:22px}
+  .ok{color:var(--core)}
+</style>
+</head>
+<body>
+<nav><div class="inner">
+  <b>⚔️ Shadow OS</b>
+  <a href="#arch">Architecture</a>
+  <a href="#loop">The Loop</a>
+  <a href="#flow">Orchestration</a>
+  <a href="#caps">Capabilities</a>
+  <a href="#kernel">Kernel</a>
+  <a href="#use">How to Use</a>
+  <a href="#next">Next Steps</a>
+</div></nav>
+
+<header class="hero">
+  <h1><span class="c">⚔️</span> Shadow OS — Engineer's Guide</h1>
+  <p>A capability-first cognitive engine: 7 shadows orchestrated by Monarch, each running one loop, sitting on an AIOS-style resource kernel.</p>
+  <div class="tagline">Capabilities, not names · one 4-stage loop · Monarch absolute · runs on a real kernel</div>
+</header>
+
+<div class="wrap">
+
+  <!-- ARCHITECTURE -->
+  <h2 id="arch">Architecture · three honest layers</h2>
+  <p class="lead">The system is deliberately split. The engine decides <i>which shadow reasons about what</i>; the kernel decides <i>which request gets LLM, memory, and tools</i>. They are complementary, not the same thing — which is exactly why this is not "AIOS" but runs <i>on</i> an AIOS-style kernel.</p>
+  <div class="stack">
+    <div class="tier t-engine"><span class="pkg">shadow_os/</span><div class="t">Cognitive layer — Shadow OS v4 engine</div><div class="d">Monarch orchestrator + 7-shadow fleet. Capability-first: shadows are data (capabilities, triggers, guardrails), not hardcoded personas.</div></div>
+    <div class="conn">▼ runs on</div>
+    <div class="tier t-kernel"><span class="pkg">kernel/</span><div class="t">Resource layer — AIOS-style kernel</div><div class="d">LLM Core · Scheduler · Context Manager · Storage + Memory · Tool Manager · Access Manager. Enforces per-agent permissions; accounts for usage.</div></div>
+    <div class="conn">▼ reuses primitives from</div>
+    <div class="tier t-prim"><span class="pkg">monarch/</span><div class="t">Primitives — Monarch OS v1.1</div><div class="d">The original single-agent pipeline. Its Caveman compressor, QA gate, and model interface are reused by v4 (not duplicated).</div></div>
+  </div>
+
+  <!-- THE LOOP -->
+  <h2 id="loop">The cognitive loop · every shadow runs this</h2>
+  <p class="lead">Each shadow loops through four stages until Reasoning declares the goal met. Monarch holds the termination veto.</p>
+  <div class="loop">
+    <div class="ls s-perc"><div class="n">STAGE 1</div><h4>Perception</h4><p>Normalize input, filter noise, take the cold-reader stance.</p></div>
+    <div class="ar">→</div>
+    <div class="ls s-mem"><div class="n">STAGE 2</div><h4>Memory</h4><p>Recall prior context: SKB triplets, TKL loadouts, decision ledger.</p></div>
+    <div class="ar">→</div>
+    <div class="ls s-reas"><div class="n">STAGE 3</div><h4>Reasoning</h4><p>Plan, self-critique, γ-calibrate (fast vs deliberate), score confidence.</p></div>
+    <div class="ar">→</div>
+    <div class="ls s-act"><div class="n">STAGE 4</div><h4>Action</h4><p>Produce the artifact + a reuse upgrade artifact (dual-output).</p></div>
+  </div>
+  <div class="loopback">↺ loops until goal met — <b style="color:var(--mon)">Monarch holds the termination veto</b></div>
+
+  <!-- ORCHESTRATION FLOW -->
+  <h2 id="flow">How Monarch orchestrates one run</h2>
+  <p class="lead">A directive flows through Monarch like this. Steps 1–2 are Monarch's intake; 3–4 route and run the fleet; 5–6 enforce the laws and learn.</p>
+  <div class="flow">
+    <div class="step"><b>Reconstruct</b><span>Strip surface ask → intent, beliefs, γ (System 1/2), signal-to-noise.</span></div>
+    <div class="step"><b>Classify</b><span>Regex-first task class (zero API cost): compression, research, commercial…</span></div>
+    <div class="step"><b>Route loadout</b><span>Dispatch table → primary + support shadows. Memory may recall a winning loadout.</span></div>
+    <div class="step"><b>Sequence</b><span>Run each shadow's loop; thread each artifact into the next.</span></div>
+    <div class="step"><b>Ratify</b><span>Thresher's release gate. Nothing ships unless it passes (Monarch absolute).</span></div>
+    <div class="step"><b>Learn + log</b><span>Record loadout in TKL, emit RSI, deposit to memory (compressed first).</span></div>
+  </div>
+
+  <!-- CAPABILITIES -->
+  <h2 id="caps">Capabilities · the 7 shadows</h2>
+  <p class="lead">Names are deprecated lineage; capabilities are the unit of account. Each shadow imports a function and neutralizes its original pathology as a guardrail.</p>
+  <div class="fleet">
+
+    <div class="shadow sh-core">
+      <div class="top"><h4>Thresher</h4><span class="tier2">Grandmaster · gate</span></div>
+      <div class="fn">Critical-reasoning gate. Everything external enters here first. Holds the consolidated release gate.</div>
+      <div class="lbl">Capabilities</div>
+      <ul><li>Signal compression & brief/RFP deconstruction</li><li>Solution-gap analysis · risk & pre-mortem</li><li>Release-gate QA veto · Socratic interrogation</li></ul>
+      <div class="lbl">Guardrail</div>
+      <ul class="guard"><li>Deletion addiction under stress — full impact analysis before any cut.</li></ul>
+      <span class="badge b-core">CORE · routes most external work</span>
+    </div>
+
+    <div class="shadow sh-core">
+      <div class="top"><h4>Aegis</h4><span class="tier2">Grandmaster</span></div>
+      <div class="fn">Commercial & standards engine. Turns architecture into priced, winnable outcomes; installs reusable standards.</div>
+      <div class="lbl">Capabilities</div>
+      <ul><li>Proposal & commercial engineering</li><li>Revenue sensing · margin architecture</li><li>IP/framework architecture · standards install</li></ul>
+      <div class="lbl">Guardrail</div>
+      <ul class="guard"><li>Encode standards as templates, not personal embodiment; endgame is removing its own necessity.</li></ul>
+      <span class="badge b-core">CORE · Commercial Triage Matrix</span>
+    </div>
+
+    <div class="shadow sh-core">
+      <div class="top"><h4>Axiom</h4><span class="tier2">Master</span></div>
+      <div class="fn">Solution & program architecture. First-principles deconstruction, system design, OS coherence.</div>
+      <div class="lbl">Capabilities</div>
+      <ul><li>First-principles deconstruction</li><li>System & program architecture</li><li>Second-order reasoning · coherence pruning</li></ul>
+      <div class="lbl">Guardrail</div>
+      <ul class="guard"><li>Owns architecture; Quill owns content — clean boundary.</li></ul>
+      <span class="badge b-core">CORE</span>
+    </div>
+
+    <div class="shadow sh-retain">
+      <div class="top"><h4>Analyst</h4><span class="tier2">Master</span></div>
+      <div class="fn">Analysis & research synthesis. The evidence spine that grounds every claim.</div>
+      <div class="lbl">Capabilities</div>
+      <ul><li>Data analysis & contradiction scanning</li><li>Evidence-chain construction</li><li>Source verification & provenance</li></ul>
+      <div class="lbl">Guardrail</div>
+      <ul class="guard"><li>Builds the evidence; Thresher/Aegis test it — does not self-ratify.</li></ul>
+      <span class="badge b-retain">RETAIN</span>
+    </div>
+
+    <div class="shadow sh-core">
+      <div class="top"><h4>Quill</h4><span class="tier2">Master</span></div>
+      <div class="fn">Artifact production. The surface the client actually sees — executive writing, docs, content.</div>
+      <div class="lbl">Capabilities</div>
+      <ul><li>Executive writing & thought leadership</li><li>Logic-chain construction & verification</li><li>Documentation · learning content</li></ul>
+      <div class="lbl">Guardrail</div>
+      <ul class="guard"><li>Produces content once architecture is set; not the primary for program design.</li></ul>
+      <span class="badge b-core">CORE</span>
+    </div>
+
+    <div class="shadow sh-personal">
+      <div class="top"><h4>Ira</h4><span class="tier2">GM-Sovereign</span></div>
+      <div class="fn">Approach redirection. Operates on the operator, not the problem. Personal-only — never in a client loadout.</div>
+      <div class="lbl">Capabilities</div>
+      <ul><li>Reframe-before-react · cross-domain synthesis</li><li>Motivation-architecture matching</li><li>Temporal grounding (one present-tense verb)</li></ul>
+      <div class="lbl">Guardrail</div>
+      <ul class="guard"><li>Stillness Gate: ship wisdom (class of problems), never advice (the immediate one).</li></ul>
+      <span class="badge b-personal">PERSONAL-ONLY · access-gated</span>
+    </div>
+
+    <div class="shadow" style="--a:var(--mon);border-left-color:var(--mon)">
+      <div class="top"><h4>👑 Monarch</h4><span class="tier2">Sovereign · kernel</span></div>
+      <div class="fn">The orchestrator. Reconstructs intent, routes the loadout, sequences loops, ratifies, and holds absolute veto.</div>
+      <div class="lbl">Owns</div>
+      <ul><li>Sovereign Reconstruction (intent/belief/γ/SNR)</li><li>Routing, sequencing, conflict arbitration</li><li>Ratification, governance log, telemetry</li></ul>
+      <span class="badge" style="color:var(--mon);border-color:rgba(216,177,90,.4)">ORCHESTRATOR</span>
+    </div>
+
+  </div>
+
+  <!-- KERNEL -->
+  <h2 id="kernel">Kernel · the resource layer's capabilities</h2>
+  <p class="lead">When Monarch is given a kernel, the fleet runs on it: completions share one accounted model, each shadow is access-checked, loop state is snapshotted, and shipped output persists.</p>
+  <div class="grid">
+    <div class="card"><h4>LLM Core <span class="mod">llm_core.py</span></h4><p>One shared model across all agents, with call + token accounting.</p></div>
+    <div class="card"><h4>Scheduler <span class="mod">scheduler.py</span></h4><p>Priority ordering of dispatched agent jobs (lower number runs first).</p></div>
+    <div class="card"><h4>Context Manager <span class="mod">context.py</span></h4><p>Deep snapshot / restore of an agent's loop state on context-switch.</p></div>
+    <div class="card"><h4>Storage + Memory <span class="mod">storage.py</span></h4><p>JSON-persistable key-value store + LRU-bounded memory manager.</p></div>
+    <div class="card"><h4>Tool Manager <span class="mod">tools.py</span></h4><p>Unified tool registry; every call is permission-checked first.</p></div>
+    <div class="card"><h4>Access Manager <span class="mod">access.py</span></h4><p>Per-agent permissions. Example: <b>Aegis</b> may touch pipeline data, <b>Ira</b> may not.</p></div>
+  </div>
+
+  <!-- HOW TO USE -->
+  <h2 id="use">How to use it</h2>
+
+  <h3>Install</h3>
+  <pre><span class="cmd">pip install -e .</span>     <span class="c"># no required dependencies; Python 3.10–3.11</span></pre>
+
+  <h3>Run the engine (offline by default)</h3>
+  <pre><span class="c"># standalone — MockLLM, no API key needed</span>
+from shadow_os import Monarch
+
+monarch = Monarch()
+task = monarch.run(<span style="color:#5ad6a0">"tighten this bloated proposal deck"</span>)
+
+print(task.final_output)   <span class="c"># ratified by Thresher's gate, then shipped</span>
+print(task.trace())        <span class="c"># task_class, loadout, γ, RSI, governance</span></pre>
+
+  <h3>Run on the kernel (full stack)</h3>
+  <pre>from kernel import Kernel
+from shadow_os import Monarch
+
+kernel  = Kernel()
+monarch = Monarch(kernel=kernel)          <span class="c"># boots the fleet onto the kernel</span>
+task    = monarch.run(<span style="color:#5ad6a0">"draft the Hexaware proposal summary"</span>)
+
+kernel.llm_core.usage()                   <span class="c"># {'calls': 3, ...} shared + accounted</span>
+len(kernel.memory)                        <span class="c"># shipped output persisted</span></pre>
+
+  <h3>Wire a real model (model-agnostic)</h3>
+  <pre>from shadow_os import Monarch
+from monarch.llm import CallableLLM
+
+def my_model(system, user):
+    ...                                   <span class="c"># call your provider; return text</span>
+    return text
+
+monarch = Monarch(llm=CallableLLM(my_model))</pre>
+
+  <h3>Command line</h3>
+  <pre><span class="cmd">python -m shadow_os.cli</span> "research why retention dropped" --trace
+<span class="cmd">python -m shadow_os.cli</span> --personal "I'm stuck on how to approach the launch"
+<span class="cmd">python -m monarch.cli</span> "draft the launch note"     <span class="c"># the v1.1 pipeline</span></pre>
+
+  <h3>Runnable demos &amp; tests</h3>
+  <pre><span class="cmd">python examples/run_engine.py</span>     <span class="c"># routes 5 directives across the fleet</span>
+<span class="cmd">python examples/run_on_kernel.py</span>  <span class="c"># accounting, access control, scheduler</span>
+<span class="cmd">python examples/run_demo.py</span>       <span class="c"># the v1.1 Caveman/QA pipeline</span>
+<span class="cmd">pytest</span>                          <span class="c"># 43 tests, no model required</span></pre>
+
+  <h3>How directives route (defaults)</h3>
+  <table>
+    <tr><th>Say something like…</th><th>Task class</th><th>Loadout</th></tr>
+    <tr><td>"tighten / compress this deck"</td><td><code>compression</code></td><td><code>thresher → quill</code></td></tr>
+    <tr><td>"research / analyze the data"</td><td><code>research</code></td><td><code>analyst → thresher</code></td></tr>
+    <tr><td>"design the system architecture"</td><td><code>architecture</code></td><td><code>axiom → thresher → quill</code></td></tr>
+    <tr><td>"write the proposal / pricing"</td><td><code>commercial</code></td><td><code>aegis → thresher → quill</code></td></tr>
+    <tr><td>"draft / write this document"</td><td><code>artifact</code></td><td><code>quill → thresher</code></td></tr>
+    <tr><td>"I'm stuck on how to approach…" <i>(+ --personal)</i></td><td><code>redirection</code></td><td><code>ira</code></td></tr>
+  </table>
+
+  <!-- NEXT STEPS -->
+  <h2 id="next">Next steps</h2>
+  <p class="lead">What's built is the full cognitive engine on an in-process kernel, with 43 passing tests. From here:</p>
+  <div class="next">
+    <div class="nx"><span class="pri" style="color:var(--core);border:1px solid rgba(90,214,160,.4);padding:2px 8px;border-radius:999px">done</span><h4>CI + ready for review</h4><p>GitHub Actions runs <code class="inline">pytest</code> on 3.10 + 3.11; PR #1 is open for review.</p></div>
+    <div class="nx"><span class="pri" style="color:var(--core);border:1px solid rgba(90,214,160,.4);padding:2px 8px;border-radius:999px">done</span><h4>Durable kernel storage</h4><p>Atomic-write disk persistence + rehydrate-on-restart + token-overlap semantic search. A real vector backend can replace <code class="inline">search</code> without changing callers.</p></div>
+    <div class="nx"><span class="pri" style="color:var(--core);border:1px solid rgba(90,214,160,.4);padding:2px 8px;border-radius:999px">done</span><h4>Real Claude adapter</h4><p><code class="inline">ClaudeLLM</code> tiers the shadows: Sonnet 4.6 (adaptive thinking) for normal work, Haiku 4.5 for clear tasks, with prompt caching on the per-shadow system prompt. Opt-in via <code class="inline">pip install -e ".[claude]"</code> + <code class="inline">ANTHROPIC_API_KEY</code>; offline default unchanged.</p></div>
+    <div class="nx"><span class="pri" style="color:var(--core);border:1px solid rgba(90,214,160,.4);padding:2px 8px;border-radius:999px">done</span><h4>Notion-backed memory + embeddings</h4><p>Memory can persist to a Notion database (<code class="inline">NotionStorage</code>) with cosine-similarity search via a pluggable embedder. Going live needs <code class="inline">NOTION_TOKEN</code> + <code class="inline">VOYAGE_API_KEY</code>; offline default needs neither.</p></div>
+    <div class="nx"><span class="pri later">later</span><h4>True preemptive scheduling</h4><p>Move from priority-ordered execution to real concurrency + preemption when multiple shadows are independent.</p></div>
+    <div class="nx"><span class="pri later">later</span><h4>Deepen Reasoning per shadow</h4><p>Encode each shadow's mental models &amp; modes (e.g. Thresher's two-phase compression, Aegis's signature moves) beyond the shared prompt.</p></div>
+    <div class="nx"><span class="pri later">later</span><h4>Open decisions</h4><p>Confirm Ira stays personal-only; define the evidence threshold to ever re-add a deleted capability.</p></div>
+  </div>
+
+  <footer>
+    Shadow OS v4 · cognitive engine on an AIOS-style kernel &nbsp;·&nbsp; <span class="ok">43 tests passing</span><br/>
+    Specs: <code class="inline">docs/shadow-os-v4.md</code> · diagram <code class="inline">docs/architecture.html</code> · this guide <code class="inline">docs/guide.html</code>
+  </footer>
+</div>
+</body>
+</html>

@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Shadow OS — Complete Manual</title>
+<style>
+  :root{
+    --bg:#0e1016;--panel:#171a22;--panel2:#1e222c;--ink:#e9ebf0;--muted:#9aa3b4;
+    --line:#2a2f3b;--gold:#d8b15a;--code:#cbd3df;--green:#5ad6a0;--blue:#5aa9e6;
+    --purple:#9d7cf0;--orange:#e6915a;--pink:#e65a7c;
+    --perc:#5aa9e6;--mem:#5ad6a0;--reas:#9d7cf0;--act:#e6915a;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:15px/1.65 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+  a{color:var(--blue);text-decoration:none}a:hover{text-decoration:underline}
+
+  /* layout: sidebar + content */
+  .shell{display:flex;max-width:1280px;margin:0 auto}
+  aside{position:sticky;top:0;height:100vh;overflow-y:auto;width:240px;flex:0 0 240px;
+    border-right:1px solid var(--line);padding:24px 16px 60px;background:#0c0e13}
+  aside .brand{font-weight:700;color:var(--gold);font-size:16px;margin-bottom:4px}
+  aside .ver{color:var(--muted);font-size:11px;margin-bottom:18px}
+  aside nav a{display:block;color:var(--muted);font-size:13px;padding:5px 8px;border-radius:6px}
+  aside nav a:hover{background:var(--panel);color:var(--ink);text-decoration:none}
+  aside nav .grp{color:var(--ink);font-weight:600;font-size:11px;text-transform:uppercase;
+    letter-spacing:1px;margin:16px 8px 4px}
+  main{flex:1;min-width:0;padding:36px 40px 100px}
+
+  h1{font-size:30px;margin:0 0 6px}
+  h1 .c{color:var(--gold)}
+  .subtitle{color:var(--muted);margin:0 0 8px;font-size:16px}
+  h2{font-size:22px;margin:46px 0 6px;padding-top:18px;border-top:1px solid var(--line)}
+  h2:first-of-type{border-top:none}
+  h3{font-size:17px;margin:26px 0 8px;color:var(--gold)}
+  h4{font-size:14px;margin:18px 0 6px}
+  p{margin:8px 0}
+  ul,ol{margin:8px 0;padding-left:22px}li{margin:4px 0}
+  .lead{color:var(--muted);font-size:16px;max-width:760px}
+
+  code.inline{font-family:ui-monospace,Menlo,monospace;background:var(--panel2);
+    padding:1px 6px;border-radius:4px;color:var(--code);font-size:12.5px}
+  pre{background:#0a0c11;border:1px solid var(--line);border-radius:10px;padding:15px 16px;
+    overflow:auto;font-family:ui-monospace,Menlo,monospace;font-size:12.5px;line-height:1.55;color:var(--code)}
+  pre .c{color:#6b7689}.cm{color:#5ad6a0}.kw{color:#9d7cf0}.st{color:#e6b07a}
+
+  .plain{background:rgba(90,169,230,.08);border:1px solid rgba(90,169,230,.3);
+    border-left:3px solid var(--blue);border-radius:8px;padding:12px 16px;margin:14px 0}
+  .plain b{color:var(--blue)}
+  .note{background:rgba(216,177,90,.07);border:1px solid rgba(216,177,90,.3);
+    border-left:3px solid var(--gold);border-radius:8px;padding:12px 16px;margin:14px 0;font-size:14px}
+  .warn{background:rgba(230,90,124,.07);border:1px solid rgba(230,90,124,.3);
+    border-left:3px solid var(--pink);border-radius:8px;padding:12px 16px;margin:14px 0;font-size:14px}
+
+  table{width:100%;border-collapse:collapse;font-size:13.5px;margin:12px 0}
+  th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{color:var(--muted);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.5px}
+  td b{color:var(--ink)} td code{font-family:ui-monospace,Menlo,monospace;font-size:12px;color:var(--code)}
+  tr:hover td{background:rgba(255,255,255,.02)}
+
+  /* layer stack */
+  .stack{display:flex;flex-direction:column;gap:8px;margin:14px 0}
+  .tier{border:1px solid var(--line);border-left:4px solid var(--a);border-radius:10px;padding:13px 16px;background:var(--panel)}
+  .tier .t{font-weight:700}.tier .d{color:var(--muted);font-size:13px;margin-top:2px}
+  .tier .pk{float:right;font-family:ui-monospace,Menlo,monospace;font-size:11px;color:var(--a);
+    border:1px solid var(--line);border-radius:6px;padding:2px 8px}
+  .t-e{--a:var(--purple)}.t-k{--a:var(--orange)}.t-p{--a:var(--blue)}
+  .conn{text-align:center;color:var(--muted);font-size:12px}
+
+  /* pipeline */
+  .pipe{display:flex;flex-wrap:wrap;gap:6px;align-items:stretch;margin:12px 0}
+  .pstep{flex:1 1 150px;min-width:140px;background:var(--panel);border:1px solid var(--line);
+    border-top:3px solid var(--a);border-radius:9px;padding:12px}
+  .pstep+.parrow{align-self:center;color:var(--muted);padding:0 2px}
+  .pstep .n{font-size:10px;font-weight:700;letter-spacing:1px;color:var(--a)}
+  .pstep h4{margin:2px 0 5px;font-size:14px}.pstep p{margin:0;color:var(--muted);font-size:12px}
+  .p1{--a:var(--blue)}.p2{--a:var(--green)}.p3{--a:var(--purple)}.p4{--a:var(--orange)}.p5{--a:var(--gold)}
+
+  /* shadow cards */
+  .shadow{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--a);
+    border-radius:10px;padding:16px;margin:12px 0}
+  .shadow .hd{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap}
+  .shadow h3{margin:0;color:var(--ink)}
+  .shadow .tag{font-size:10.5px;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:2px 9px;white-space:nowrap}
+  .shadow .role{color:var(--muted);font-size:13px;margin:6px 0 0}
+  .shadow .lbl{font-size:10.5px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin:12px 0 3px}
+  .shadow ul{margin:0;padding-left:18px;font-size:13px}
+  .shadow ul.g li{color:#d6a06a}
+  .c-core{--a:var(--green)}.c-ret{--a:var(--blue)}.c-per{--a:var(--pink)}.c-mon{--a:var(--gold)}
+
+  .pillrow{display:flex;flex-wrap:wrap;gap:7px;margin:10px 0}
+  .pill{font-size:12px;padding:4px 11px;border-radius:999px;background:var(--panel2);border:1px solid var(--line);color:var(--muted)}
+  .pill.on{color:var(--green);border-color:rgba(90,214,160,.4)}
+
+  .kv{display:grid;grid-template-columns:160px 1fr;gap:6px 14px;font-size:13.5px;margin:10px 0}
+  .kv div:nth-child(odd){color:var(--muted)}
+
+  footer{margin-top:50px;border-top:1px solid var(--line);padding-top:20px;color:var(--muted);font-size:12.5px}
+  .toc-top{display:none}
+  @media(max-width:880px){
+    aside{display:none}main{padding:24px 18px 80px}
+    .toc-top{display:block}
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+<aside>
+  <div class="brand">⚔️ Shadow OS</div>
+  <div class="ver">Complete Manual · v4 · 66 tests green</div>
+  <nav>
+    <div class="grp">Start</div>
+    <a href="#what">What it is</a>
+    <a href="#mental">Mental model</a>
+    <a href="#install">Install &amp; first run</a>
+    <div class="grp">How it works</div>
+    <a href="#layers">The three layers</a>
+    <a href="#loop">The 4-stage loop</a>
+    <a href="#orchestration">How a run flows</a>
+    <a href="#routing">Routing &amp; loadouts</a>
+    <div class="grp">Capabilities</div>
+    <a href="#shadows">The 7 shadows</a>
+    <a href="#kernel">Kernel managers</a>
+    <a href="#memory">Memory &amp; Notion</a>
+    <a href="#models">Model tiering</a>
+    <a href="#invariants">The 8 laws</a>
+    <div class="grp">Using it</div>
+    <a href="#use-offline">Offline</a>
+    <a href="#use-claude">With Claude</a>
+    <a href="#use-kernel">On the kernel</a>
+    <a href="#use-cli">Command line</a>
+    <a href="#inspect">Reading the result</a>
+    <a href="#extend">Extending it</a>
+    <div class="grp">Reference</div>
+    <a href="#faq">FAQ &amp; troubleshooting</a>
+    <a href="#glossary">Glossary</a>
+    <a href="#files">File map</a>
+  </nav>
+</aside>
+
+<main>
+  <h1><span class="c">⚔️</span> Shadow OS — Complete Manual</h1>
+  <p class="subtitle">A capability-first cognitive engine that turns a request into a ratified deliverable.</p>
+  <p class="lead">This manual explains, in plain language, what Shadow OS can do and exactly how to use it — from a one-line offline run to driving the 7-shadow fleet on a real Claude model with durable memory. No prior context needed.</p>
+
+  <!-- WHAT -->
+  <h2 id="what">What it is</h2>
+  <p>Shadow OS takes a <b>directive</b> ("tighten this proposal", "research why retention dropped") and runs it through a team of seven specialists — called <b>shadows</b> — coordinated by an orchestrator named <b>Monarch</b>. It returns a finished answer only after that answer passes a quality gate.</p>
+  <div class="plain"><b>In plain words:</b> think of it as a small, opinionated agency. You hand in a brief. A manager (Monarch) figures out what you really asked for, picks the right specialists, runs them in order, makes each one's output feed the next, and refuses to ship anything that fails review. You get back the polished result plus a full record of how it was made.</div>
+  <p>Three things make it distinctive:</p>
+  <ul>
+    <li><b>Capability-first.</b> The shadows are defined by what they can <i>do</i> (compress, analyze, write…), not by personas. Their behaviour is data you can edit.</li>
+    <li><b>One loop, many specialists.</b> Every shadow runs the same four mental steps; only their focus differs.</li>
+    <li><b>Nothing ships unratified.</b> A single gate (Thresher) has veto power over every output.</li>
+  </ul>
+
+  <!-- MENTAL MODEL -->
+  <h2 id="mental">The mental model in 30 seconds</h2>
+  <div class="kv">
+    <div>Directive</div><div>what you ask for (a string)</div>
+    <div>Monarch</div><div>the orchestrator — plans, routes, ratifies, has the final veto</div>
+    <div>Shadow</div><div>a specialist capability (Thresher, Aegis, Axiom, Analyst, Quill, Ira)</div>
+    <div>Loadout</div><div>the ordered team chosen for this directive (e.g. <code>aegis → thresher → quill</code>)</div>
+    <div>The loop</div><div>Perception → Memory → Reasoning → Action, run by each shadow</div>
+    <div>The gate</div><div>Thresher's release check — the only thing that can approve a ship</div>
+    <div>Task</div><div>the object that records everything that happened (the audit trail)</div>
+    <div>Kernel</div><div>optional resource layer underneath — model sharing, memory, access control</div>
+  </div>
+
+  <!-- INSTALL -->
+  <h2 id="install">Install &amp; your first run</h2>
+  <p>Python 3.10 or 3.11. No required dependencies — it runs fully offline out of the box.</p>
+<pre><span class="cm"># from the repo root</span>
+<span class="cm"># (optional) create a virtualenv first</span>
+pip install -e .
+
+<span class="cm"># run the engine offline — no API key needed</span>
+python -m shadow_os.cli <span class="st">"tighten this bloated proposal deck"</span></pre>
+  <p>That prints the routed loadout and the (mock) result. To see real reasoning, jump to <a href="#use-claude">With Claude</a>.</p>
+  <div class="note"><b>Why offline works:</b> the reasoning step is model-agnostic. With no model wired in, it uses a deterministic <code class="inline">MockLLM</code> so you can exercise routing, gating, memory, and the kernel without a key or network. Swap in Claude when you want real output.</div>
+
+  <!-- LAYERS -->
+  <h2 id="layers">The three layers</h2>
+  <p>The codebase is three packages, stacked. You can use just the top, or all three.</p>
+  <div class="stack">
+    <div class="tier t-e"><span class="pk">shadow_os/</span><div class="t">Cognitive layer — the engine</div><div class="d">Monarch + the 7 shadows. Decides <i>which specialist reasons about what</i>. This is what you usually call.</div></div>
+    <div class="conn">▼ optionally runs on</div>
+    <div class="tier t-k"><span class="pk">kernel/</span><div class="t">Resource layer — the AIOS-style kernel</div><div class="d">Decides <i>which request gets the model, memory, and tools</i>. Shared model with usage accounting, durable storage, per-agent permissions.</div></div>
+    <div class="conn">▼ reuses primitives from</div>
+    <div class="tier t-p"><span class="pk">monarch/</span><div class="t">Primitives — Monarch OS v1.1</div><div class="d">The original single-agent pipeline. Its compressor (Caveman), QA checks, and the model interface are reused by the engine, not duplicated.</div></div>
+  </div>
+  <div class="plain"><b>In plain words:</b> the engine is the brain; the kernel is the operating system it can run on (giving it durable memory, shared compute, and security); the primitives are the reusable parts both lean on. For most uses you only touch the engine.</div>
+
+  <!-- LOOP -->
+  <h2 id="loop">The 4-stage loop — how a shadow thinks</h2>
+  <p>Every shadow runs the same four steps, looping until its reasoning says the goal is met (Monarch can stop it).</p>
+  <div class="pipe">
+    <div class="pstep p1"><div class="n">STAGE 1</div><h4>Perception</h4><p>Take in the directive (or the previous shadow's output), strip noise, normalize it.</p></div>
+    <div class="parrow">→</div>
+    <div class="pstep p2"><div class="n">STAGE 2</div><h4>Memory</h4><p>Recall relevant prior context for this kind of task.</p></div>
+    <div class="parrow">→</div>
+    <div class="pstep p3"><div class="n">STAGE 3</div><h4>Reasoning</h4><p>Plan, self-critique, score its own confidence. This is the step that calls the model.</p></div>
+    <div class="parrow">→</div>
+    <div class="pstep p4"><div class="n">STAGE 4</div><h4>Action</h4><p>Produce the artifact + a small "what I learned" upgrade note (dual output).</p></div>
+  </div>
+  <div class="note"><b>Only Stage 3 needs a model.</b> Perception, Memory, and Action are deterministic code. That's why the engine is testable and fast offline — the model is one swappable piece, not the whole machine.</div>
+
+  <!-- ORCHESTRATION -->
+  <h2 id="orchestration">How a full run flows (Monarch)</h2>
+  <ol>
+    <li><b>Reconstruct.</b> Strip the polite surface of your request down to the real intent; judge stakes (System 1 = quick, System 2 = deliberate).</li>
+    <li><b>Classify.</b> A fast regex decides the task class (compression, research, commercial, architecture, artifact, redirection) — no model call, zero cost.</li>
+    <li><b>Route a loadout.</b> Look up which shadows handle that class (and reuse a previously winning team from memory if there is one).</li>
+    <li><b>Sequence.</b> Run each shadow's loop in order; each one's output becomes the next one's input.</li>
+    <li><b>Ratify.</b> Thresher's gate inspects the final artifact. Pass → ship. Fail → veto, nothing ships.</li>
+    <li><b>Learn &amp; log.</b> Record the winning loadout, emit the upgrade note, and deposit the result into memory (compressed first).</li>
+  </ol>
+
+  <!-- ROUTING -->
+  <h2 id="routing">Routing &amp; loadouts — say this, get that</h2>
+  <p>Routing is deterministic and inspectable. Phrase your directive with these cues and you'll hit the matching team:</p>
+  <table>
+    <tr><th>If your directive sounds like…</th><th>Task class</th><th>Loadout (who runs, in order)</th></tr>
+    <tr><td>"tighten / compress / trim this deck"</td><td><code>compression</code></td><td><code>thresher → quill</code></td></tr>
+    <tr><td>"research / analyze / find evidence"</td><td><code>research</code></td><td><code>analyst → thresher</code></td></tr>
+    <tr><td>"design / architect the system"</td><td><code>architecture</code></td><td><code>axiom → thresher → quill</code></td></tr>
+    <tr><td>"proposal / pricing / revenue / deal"</td><td><code>commercial</code></td><td><code>aegis → thresher → quill</code></td></tr>
+    <tr><td>"write / draft this document"</td><td><code>artifact</code></td><td><code>quill → thresher</code></td></tr>
+    <tr><td>"I'm stuck on how to approach…" <i>(+ personal)</i></td><td><code>redirection</code></td><td><code>ira</code></td></tr>
+    <tr><td>anything else</td><td><code>general</code></td><td><code>thresher</code></td></tr>
+  </table>
+  <p>Notice Thresher appears in almost every team — everything passes through the gate. And Ira only appears when you explicitly mark the run <b>personal</b> (see <a href="#shadows">Ira</a>).</p>
+
+  <!-- SHADOWS -->
+  <h2 id="shadows">Capabilities · the 7 shadows in depth</h2>
+  <p>Each shadow is configured by data: a list of <b>capabilities</b>, the <b>triggers</b> that route to it, and <b>guardrails</b> (its failure mode, neutralized). Here is the full roster.</p>
+
+  <div class="shadow c-mon">
+    <div class="hd"><h3>👑 Monarch</h3><span class="tag">Sovereign · orchestrator</span></div>
+    <p class="role">Not a worker — the conductor. Reconstructs intent, routes the loadout, sequences the loops, arbitrates conflicts, and holds the final veto. Nothing ships without Monarch's ratification.</p>
+    <div class="lbl">Owns</div>
+    <ul><li>Sovereign Reconstruction (intent → beliefs → System-1/2 calibration → signal-to-noise)</li><li>Classification, routing, sequencing</li><li>Ratification, governance log, telemetry, memory deposit</li></ul>
+  </div>
+
+  <div class="shadow c-core">
+    <div class="hd"><h3>Thresher</h3><span class="tag">Grandmaster · the gate</span></div>
+    <p class="role">The critical-reasoning gate. Everything external passes through it. It compresses to the essential signal and holds the release gate — the one check that can approve or veto a ship.</p>
+    <div class="lbl">Capabilities</div>
+    <ul><li>Signal compression &amp; brief/RFP deconstruction</li><li>Solution-gap analysis (stated vs delivered)</li><li>Risk modeling &amp; pre-mortem</li><li>Release-gate QA (the veto), Socratic interrogation</li></ul>
+    <div class="lbl">Guardrail</div>
+    <ul class="g"><li>"The Deleter" under stress — it must run full impact analysis before any cut, so it doesn't destroy essential nuance.</li></ul>
+    <div class="lbl">What its gate actually checks</div>
+    <ul><li>Not empty · no forbidden register or exclamation marks · no unresolved markers (<code>TODO</code>, <code>??</code>) · above a minimum signal length.</li></ul>
+  </div>
+
+  <div class="shadow c-core">
+    <div class="hd"><h3>Aegis</h3><span class="tag">Grandmaster · commercial &amp; standards</span></div>
+    <p class="role">Turns architecture into priced, winnable commercial outcomes, and installs reusable standards. Runs every job through a Commercial Triage Matrix first (TRANSFORM / AMPLIFY / AVOID / AUTOMATE).</p>
+    <div class="lbl">Capabilities</div>
+    <ul><li>Proposal &amp; commercial engineering, margin architecture</li><li>Revenue sensing, stakeholder priority mapping</li><li>IP/framework architecture, standards <i>install</i></li></ul>
+    <div class="lbl">Guardrail</div>
+    <ul class="g"><li>Encode standards as reusable templates, not personal heroics — its endgame is making itself unnecessary.</li></ul>
+  </div>
+
+  <div class="shadow c-core">
+    <div class="hd"><h3>Axiom</h3><span class="tag">Master · architecture</span></div>
+    <p class="role">First-principles deconstruction and system/program design. Produces structural blueprints, not prose.</p>
+    <div class="lbl">Capabilities</div>
+    <ul><li>First-principles problem deconstruction</li><li>System &amp; program architecture, competency design</li><li>Second-order reasoning, coherence pruning</li></ul>
+    <div class="lbl">Guardrail</div>
+    <ul class="g"><li>Owns architecture; hands content production to Quill — a clean boundary, no overlap.</li></ul>
+  </div>
+
+  <div class="shadow c-ret">
+    <div class="hd"><h3>Analyst</h3><span class="tag">Master · evidence</span></div>
+    <p class="role">The evidence spine. Grounds claims so the gate and real audiences can't reject them.</p>
+    <div class="lbl">Capabilities</div>
+    <ul><li>Data analysis &amp; contradiction scanning</li><li>Evidence-chain construction, pattern detection</li><li>Source verification &amp; provenance</li></ul>
+    <div class="lbl">Guardrail</div>
+    <ul class="g"><li>Builds the evidence; never ratifies its own work — Thresher/Aegis test it.</li></ul>
+  </div>
+
+  <div class="shadow c-core">
+    <div class="hd"><h3>Quill</h3><span class="tag">Master · artifact production</span></div>
+    <p class="role">The surface the audience actually sees — executive writing, documents, decks, learning content. Nothing ships as a raw thought.</p>
+    <div class="lbl">Capabilities</div>
+    <ul><li>Executive writing &amp; thought leadership</li><li>Logic-chain construction &amp; verification</li><li>Documentation, learning content</li></ul>
+    <div class="lbl">Guardrail</div>
+    <ul class="g"><li>Produces content only after architecture is set (Axiom owns the design).</li></ul>
+  </div>
+
+  <div class="shadow c-per">
+    <div class="hd"><h3>Ira</h3><span class="tag">Grandmaster-Sovereign · personal-only</span></div>
+    <p class="role">The only shadow that works on <i>you</i>, not the problem — approach redirection. Its success signal is "did the person become more able to guide themselves?" Its Stillness Gate ships wisdom (the class of problem), never quick advice.</p>
+    <div class="lbl">Capabilities</div>
+    <ul><li>Reframe-before-react, cross-domain synthesis</li><li>Motivation-architecture matching</li><li>Temporal grounding (one present-tense next action)</li></ul>
+    <div class="lbl">Guardrail</div>
+    <ul class="g"><li>Cannot produce technical artifacts; defers to human support in genuine crisis.</li></ul>
+    <div class="warn"><b>Access-gated.</b> Ira never enters a team unless you pass <code class="inline">context={"personal": True}</code> (CLI: <code class="inline">--personal</code>). If routing picks Ira but the run isn't personal, Monarch governs the task itself instead.</div>
+  </div>
+
+  <!-- KERNEL -->
+  <h2 id="kernel">Capabilities · the kernel (resource layer)</h2>
+  <p>Optional. When you give Monarch a kernel, the fleet runs <i>on</i> it: the model is shared and metered, each shadow is access-checked, loop state is snapshotted, and shipped output is persisted.</p>
+  <table>
+    <tr><th>Manager</th><th>What it does</th><th>Module</th></tr>
+    <tr><td><b>LLM Core</b></td><td>One shared model across all shadows, with call + token accounting</td><td><code>llm_core.py</code></td></tr>
+    <tr><td><b>Scheduler</b></td><td>Runs dispatched jobs in priority order (lowest number first)</td><td><code>scheduler.py</code></td></tr>
+    <tr><td><b>Context Manager</b></td><td>Deep snapshot / restore of a shadow's loop state on a context-switch</td><td><code>context.py</code></td></tr>
+    <tr><td><b>Storage + Memory</b></td><td>Durable, atomic-write key-value store + LRU memory with search</td><td><code>storage.py</code></td></tr>
+    <tr><td><b>Tool Manager</b></td><td>A registry of tools; every call is permission-checked first</td><td><code>tools.py</code></td></tr>
+    <tr><td><b>Access Manager</b></td><td>Per-agent permissions; denies what isn't granted</td><td><code>access.py</code></td></tr>
+  </table>
+  <div class="plain"><b>Concrete example baked in:</b> the commercial agent (Aegis) is granted access to "pipeline data"; the personal agent (Ira) is not. Ask the kernel to run that tool as Ira and it raises <code class="inline">AccessDenied</code>. Security is enforced at the resource boundary, independent of what the engine decides to attempt.</div>
+
+  <!-- MEMORY -->
+  <h2 id="memory">Capabilities · memory (disk, Notion, embeddings)</h2>
+  <p>The kernel's memory is durable and pluggable.</p>
+  <ul>
+    <li><b>Disk (default).</b> Give the kernel a <code class="inline">storage_path</code> and every write flushes to disk atomically (crash-safe). A fresh kernel on the same path rehydrates its memory.</li>
+    <li><b>Notion (optional).</b> Swap the backend for <code class="inline">NotionStorage</code> and memory lives in a Notion database — browsable and editable in the same workspace as your specs.</li>
+    <li><b>Search.</b> Token-overlap by default (no dependencies); pass an <b>embedder</b> for true semantic search by meaning. <code class="inline">HashEmbedder</code> works offline; <code class="inline">VoyageEmbedder</code> gives real embeddings with a key.</li>
+  </ul>
+  <div class="note"><b>Going live with Notion + embeddings</b> needs three things: a Notion integration token (<code class="inline">NOTION_TOKEN</code>), a database with <code>Key</code> (title) and <code>Payload</code> (rich_text) properties, and <code class="inline">VOYAGE_API_KEY</code> for real semantics. Without them, disk + token-overlap search work unchanged.</div>
+
+  <!-- MODELS -->
+  <h2 id="models">Capabilities · model tiering (Sonnet + Haiku)</h2>
+  <p>The Claude adapter picks the model to fit the task:</p>
+  <table>
+    <tr><th>Task</th><th>Model</th><th>Settings</th></tr>
+    <tr><td>Normal / deliberate work (default)</td><td><b>Sonnet 4.6</b> <code>claude-sonnet-4-6</code></td><td>adaptive thinking, <code>effort: high</code></td></tr>
+    <tr><td>Clear, simple prompts</td><td><b>Haiku 4.5</b> <code>claude-haiku-4-5</code></td><td>fast — no thinking/effort (Haiku doesn't accept them)</td></tr>
+  </table>
+  <p>"Clear" = a short prompt with no complexity markers (design, analyze, strategy, risk, why, decide…). Turn tiering off to pin one model with <code class="inline">auto_tier=False</code>, or set your own with <code class="inline">model=</code> / <code class="inline">simple_model=</code>.</p>
+  <div class="note"><b>Prompt caching is on.</b> Each shadow's system prompt is stable, so it's sent as a cached block — repeated calls reuse the cached prefix and cost less. Per-model usage is tracked on <code class="inline">llm.usage["by_model"]</code>.</div>
+
+  <!-- INVARIANTS -->
+  <h2 id="invariants">The 8 governing laws</h2>
+  <ol>
+    <li><b>Capability-first</b> — no persona survives as a standalone entity; capabilities are the unit.</li>
+    <li><b>No mixed justification</b> — each capability earns its place on its own evidence.</li>
+    <li><b>Evidence-grounded</b> — survival is decided by real usage, not self-report.</li>
+    <li><b>Fold or retire</b> — a capability that can't stand alone is folded in or removed; no bloat.</li>
+    <li><b>Import the function, not the pathology</b> — every borrowed strength ships with its failure mode neutralized as a guardrail.</li>
+    <li><b>RSI dual-output</b> — every run yields a deliverable <i>plus</i> an upgrade note.</li>
+    <li><b>Monarch absolute</b> — no output ships unratified.</li>
+    <li><b>Compression-before-deposit</b> — nothing bloated enters memory.</li>
+  </ol>
+  <p>Laws 6, 7, and 8 are <b>enforced in code</b> and covered by tests; the rest are design discipline encoded in how the fleet is built.</p>
+
+  <!-- USE OFFLINE -->
+  <h2 id="use-offline">Using it · offline (no key)</h2>
+<pre><span class="kw">from</span> shadow_os <span class="kw">import</span> Monarch
+
+monarch = Monarch()                      <span class="c"># offline MockLLM by default</span>
+task = monarch.run(<span class="st">"tighten this bloated proposal deck"</span>)
+
+print(task.final_output)   <span class="c"># the ratified result</span>
+print(task.trace())        <span class="c"># task_class, loadout, gamma, RSI, governance</span></pre>
+  <p>Run the bundled tour across five task classes:</p>
+<pre>python examples/run_engine.py</pre>
+
+  <!-- USE CLAUDE -->
+  <h2 id="use-claude">Using it · with a real Claude model</h2>
+<pre><span class="cm"># install the SDK and set a key</span>
+pip install -e <span class="st">".[claude]"</span>
+export ANTHROPIC_API_KEY=sk-ant-...
+
+python examples/run_with_claude.py <span class="st">"draft the Hexaware proposal summary"</span></pre>
+<pre><span class="kw">from</span> shadow_os <span class="kw">import</span> Monarch
+<span class="kw">from</span> monarch.claude_llm <span class="kw">import</span> ClaudeLLM
+
+monarch = Monarch(llm=ClaudeLLM())       <span class="c"># Sonnet 4.6 default, Haiku for clear tasks</span>
+task = monarch.run(<span class="st">"research why retention dropped after onboarding"</span>)
+print(task.final_output)
+print(llm.usage)  <span class="c"># once you keep a reference: llm = ClaudeLLM(); ...</span></pre>
+  <p>Tune it:</p>
+<pre>ClaudeLLM(
+    model=<span class="st">"claude-sonnet-4-6"</span>,      <span class="c"># default tier</span>
+    simple_model=<span class="st">"claude-haiku-4-5"</span>, <span class="c"># clear-task tier</span>
+    auto_tier=<span class="kw">True</span>,                  <span class="c"># False = always use `model`</span>
+    effort=<span class="st">"high"</span>,                   <span class="c"># low | medium | high</span>
+    max_tokens=16000,
+)</pre>
+  <p>Any other provider works too — pass anything with <code class="inline">complete(system, user) -> str</code>:</p>
+<pre><span class="kw">from</span> monarch <span class="kw">import</span> Monarch, CallableLLM
+monarch = Monarch(llm=CallableLLM(<span class="kw">lambda</span> system, user: my_model(system, user)))</pre>
+
+  <!-- USE KERNEL -->
+  <h2 id="use-kernel">Using it · on the kernel (durable + metered)</h2>
+<pre><span class="kw">from</span> kernel <span class="kw">import</span> Kernel
+<span class="kw">from</span> shadow_os <span class="kw">import</span> Monarch
+
+kernel = Kernel(storage_path=<span class="st">"state.json"</span>)   <span class="c"># durable memory on disk</span>
+monarch = Monarch(kernel=kernel)               <span class="c"># boots the fleet onto the kernel</span>
+task = monarch.run(<span class="st">"draft the proposal summary"</span>)
+
+kernel.llm_core.usage()    <span class="c"># {'calls': 3, ...} shared + accounted</span>
+len(kernel.memory)         <span class="c"># shipped output persisted</span>
+
+<span class="c"># a fresh kernel on the same path resumes the memory</span>
+kernel2 = Kernel(storage_path=<span class="st">"state.json"</span>)
+kernel2.memory.search(<span class="st">"retention drop"</span>)   <span class="c"># [(key, record, score), ...]</span></pre>
+  <p>Notion-backed memory with semantic search:</p>
+<pre><span class="kw">from</span> kernel <span class="kw">import</span> Kernel, NotionStorage, HttpNotionTransport, VoyageEmbedder
+<span class="kw">from</span> shadow_os <span class="kw">import</span> Monarch
+
+kernel = Kernel(
+    storage=NotionStorage(<span class="st">"YOUR_DATABASE_ID"</span>, HttpNotionTransport()),  <span class="c"># NOTION_TOKEN env</span>
+    embedder=VoyageEmbedder(),                                          <span class="c"># VOYAGE_API_KEY env</span>
+)
+Monarch(kernel=kernel).run(<span class="st">"research why retention dropped"</span>)</pre>
+
+  <!-- USE CLI -->
+  <h2 id="use-cli">Using it · command line</h2>
+<pre><span class="cm"># engine</span>
+python -m shadow_os.cli <span class="st">"research why retention dropped"</span> --trace
+python -m shadow_os.cli --personal <span class="st">"I'm stuck on how to approach the launch"</span>
+
+<span class="cm"># the v1.1 single-agent pipeline (Caveman/QA)</span>
+python -m monarch.cli <span class="st">"draft the launch note"</span></pre>
+  <ul>
+    <li><code class="inline">--trace</code> prints the full audit trail (class, loadout, gamma, RSI, governance) to stderr.</li>
+    <li><code class="inline">--personal</code> allows Ira into the loadout.</li>
+    <li>Exit code is <code>0</code> when the output shipped, <code>1</code> when the gate vetoed it.</li>
+  </ul>
+
+  <!-- INSPECT -->
+  <h2 id="inspect">Reading the result (the Task object)</h2>
+  <p>Every run returns a <code class="inline">Task</code>. The useful fields:</p>
+  <div class="kv">
+    <div>task.final_output</div><div>the ratified text (empty string if vetoed)</div>
+    <div>task.shipped</div><div><code>True</code> only if Thresher's gate passed</div>
+    <div>task.task_class</div><div>the routed class (e.g. <code>commercial</code>)</div>
+    <div>task.shadow_loadout</div><div>the team that ran, in order</div>
+    <div>task.gamma</div><div><code>system1</code> (quick) or <code>system2</code> (deliberate)</div>
+    <div>task.results</div><div>per-shadow output, confidence, self-critique</div>
+    <div>task.rsi_artifacts</div><div>the "what improved" upgrade notes (one per shadow)</div>
+    <div>task.governance_log</div><div>every step + whether Monarch ratified it</div>
+    <div>task.trace()</div><div>a compact dict of all the above — best for logging</div>
+  </div>
+  <div class="warn"><b>If <code class="inline">shipped</code> is False:</b> the gate vetoed the output. Check <code class="inline">task.governance_log</code> for the <code>VETO</code> line — it names the failing checks (empty, forbidden register, unresolved markers, or below minimum signal).</div>
+
+  <!-- EXTEND -->
+  <h2 id="extend">Extending it</h2>
+  <h3>Add a routing rule</h3>
+  <p>Edit <code class="inline">shadow_os/router.py</code>: add a regex to <code class="inline">_CLASS_RULES</code> and a team to <code class="inline">_DISPATCH</code>.</p>
+  <h3>Tune a shadow</h3>
+  <p>Shadows are data. In <code class="inline">shadow_os/shadows/&lt;name&gt;.py</code> edit the <code class="inline">capabilities</code>, <code class="inline">deployment_triggers</code>, <code class="inline">guardrails</code>, and <code class="inline">reasoning_directive</code> — no new class needed.</p>
+  <h3>Harden the gate</h3>
+  <p>Add checks to <code class="inline">Thresher.gate()</code> in <code class="inline">shadow_os/shadows/thresher.py</code>. Anything it flags blocks the ship.</p>
+  <h3>Register a kernel tool with a permission</h3>
+<pre>kernel.tools.register(<span class="st">"send_email"</span>, send_fn, permission=<span class="st">"comms:send"</span>)
+kernel.access.grant(<span class="st">"quill"</span>, <span class="st">"comms:send"</span>)
+kernel.syscall(<span class="st">"quill"</span>, <span class="st">"tool.call"</span>, tool=<span class="st">"send_email"</span>, ...)  <span class="c"># denied for others</span></pre>
+
+  <!-- FAQ -->
+  <h2 id="faq">FAQ &amp; troubleshooting</h2>
+  <h4>Is this AIOS?</h4>
+  <p>No. Shadow OS is the <i>cognitive/agent</i> layer; AIOS is a <i>kernel/resource</i> layer. The included <code>kernel/</code> is an AIOS-style resource tier the engine can run on — but it's a thin, app-specific slice, not the full AIOS project.</p>
+  <h4>Why was my output vetoed?</h4>
+  <p>Thresher's gate rejects empty output, forbidden register words, exclamation marks, unresolved markers (<code>TODO</code>, <code>??</code>), or text below a minimum length. The governance log names the exact failure.</p>
+  <h4>Why did a simple task go to Haiku?</h4>
+  <p>The Claude adapter tiers by the prompt text. Short, marker-free prompts route to Haiku for speed. Set <code class="inline">auto_tier=False</code> to always use Sonnet (or your chosen model).</p>
+  <h4>Do I need an API key?</h4>
+  <p>No — the engine runs fully offline on <code>MockLLM</code>. A key is only needed for real reasoning via <code>ClaudeLLM</code>.</p>
+  <h4>Does memory survive a restart?</h4>
+  <p>Yes, when you give the kernel a <code class="inline">storage_path</code> (or a Notion backend). Without one, memory is in-process and resets each run.</p>
+  <h4>The kernel raised AccessDenied.</h4>
+  <p>That's the Access Manager working. Grant the permission with <code class="inline">kernel.access.grant(agent_id, permission)</code> (booting the fleet grants the defaults automatically).</p>
+
+  <!-- GLOSSARY -->
+  <h2 id="glossary">Glossary</h2>
+  <div class="kv">
+    <div>Directive</div><div>your request, as a string</div>
+    <div>Shadow</div><div>a specialist capability that runs the 4-stage loop</div>
+    <div>Loadout</div><div>the ordered set of shadows chosen for a directive</div>
+    <div>Gate / ratify</div><div>Thresher's release check; the only approval to ship</div>
+    <div>Gamma (γ)</div><div>System-1 (quick) vs System-2 (deliberate) calibration</div>
+    <div>RSI</div><div>the per-run upgrade note (deliverable + improvement)</div>
+    <div>TKL</div><div>memory of which loadout solved a task class before</div>
+    <div>Caveman</div><div>the deterministic compressor (filler/exclamation removal, substance preserved)</div>
+    <div>Syscall</div><div>a request to the kernel (model, memory, tool, context, access)</div>
+  </div>
+
+  <!-- FILES -->
+  <h2 id="files">File map</h2>
+  <table>
+    <tr><th>Path</th><th>What's there</th></tr>
+    <tr><td><code>shadow_os/monarch.py</code></td><td>the orchestrator</td></tr>
+    <tr><td><code>shadow_os/shadows/</code></td><td>the 7 shadows (data-configured)</td></tr>
+    <tr><td><code>shadow_os/router.py</code></td><td>task classifier + dispatch table</td></tr>
+    <tr><td><code>shadow_os/memory.py</code> · <code>task.py</code> · <code>invariants.py</code></td><td>engine memory, Task entity, the 8 laws</td></tr>
+    <tr><td><code>kernel/</code></td><td>LLM Core, Scheduler, Context, Storage/Memory, Tools, Access, Notion, embeddings</td></tr>
+    <tr><td><code>monarch/claude_llm.py</code></td><td>the Claude adapter (Sonnet + Haiku tiering)</td></tr>
+    <tr><td><code>monarch/</code> (rest)</td><td>v1.1 pipeline + reused primitives (Caveman, QA, LLM interface)</td></tr>
+    <tr><td><code>examples/</code></td><td>run_engine · run_on_kernel · run_with_claude · run_demo</td></tr>
+    <tr><td><code>docs/</code></td><td>shadow-os-v4 spec · architecture.html · guide.html · this manual</td></tr>
+  </table>
+
+  <footer>
+    Shadow OS v4 — capability-first cognitive engine on an AIOS-style kernel.<br/>
+    Stack: kernel (resources) → shadow_os (7-shadow engine) → Claude (Sonnet 4.6 / Haiku 4.5). 66 tests passing, no model required.
+  </footer>
+</main>
+</div>
+</body>
+</html>

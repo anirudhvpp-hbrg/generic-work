@@ -1,0 +1,120 @@
+"""Tests for the ClaudeLLM adapter — offline, via an injected fake client."""
+
+import os
+import sys
+import types
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from monarch.claude_llm import ClaudeLLM, _extract_text  # noqa: E402
+from shadow_os import Monarch  # noqa: E402
+
+
+def _block(text):
+    return types.SimpleNamespace(type="text", text=text)
+
+
+def _response(text, **usage):
+    return types.SimpleNamespace(
+        content=[_block(text)],
+        usage=types.SimpleNamespace(**usage) if usage else None,
+    )
+
+
+class FakeMessages:
+    def __init__(self, reply="grounded answer"):
+        self.reply = reply
+        self.calls = []
+
+    def create(self, **kwargs):
+        self.calls.append(kwargs)
+        return _response(self.reply, input_tokens=10, output_tokens=5,
+                         cache_read_input_tokens=8)
+
+
+class FakeClient:
+    def __init__(self, reply="grounded answer"):
+        self.messages = FakeMessages(reply)
+
+
+def test_complete_returns_text_and_records_usage():
+    client = FakeClient("Cause: latency. Fix: cache.")
+    llm = ClaudeLLM(client=client)
+    out = llm.complete("system prompt", "user prompt")
+    assert out == "Cause: latency. Fix: cache."
+    assert llm.usage["calls"] == 1
+    assert llm.usage["input_tokens"] == 10
+    assert llm.usage["cache_read_input_tokens"] == 8
+
+
+def test_complex_task_uses_sonnet_with_adaptive_effort_and_cached_system():
+    client = FakeClient()
+    llm = ClaudeLLM(client=client)
+    llm.complete("SYS", "design the system architecture for billing")
+    sent = client.messages.calls[0]
+    assert sent["model"] == "claude-sonnet-4-6"            # default tier
+    assert sent["thinking"] == {"type": "adaptive"}
+    assert sent["output_config"] == {"effort": "high"}
+    assert sent["system"][0]["text"] == "SYS"
+    assert sent["system"][0]["cache_control"] == {"type": "ephemeral"}
+    assert sent["messages"] == [{"role": "user", "content": "design the system architecture for billing"}]
+
+
+def test_clear_task_routes_to_haiku_without_thinking_or_effort():
+    client = FakeClient()
+    llm = ClaudeLLM(client=client)
+    llm.complete("SYS", "fix this typo")                    # short + no complexity markers
+    sent = client.messages.calls[0]
+    assert sent["model"] == "claude-haiku-4-5"
+    # Haiku 4.5 rejects effort + adaptive thinking, so they must be omitted.
+    assert "thinking" not in sent
+    assert "output_config" not in sent
+
+
+def test_auto_tier_off_always_uses_default_model():
+    client = FakeClient()
+    ClaudeLLM(client=client, auto_tier=False).complete("SYS", "fix this typo")
+    assert client.messages.calls[0]["model"] == "claude-sonnet-4-6"
+
+
+def test_usage_tracks_per_model():
+    client = FakeClient()
+    llm = ClaudeLLM(client=client)
+    llm.complete("s", "fix typo")                          # haiku
+    llm.complete("s", "analyze the retention decline")     # sonnet
+    assert llm.usage["by_model"]["claude-haiku-4-5"] == 1
+    assert llm.usage["by_model"]["claude-sonnet-4-6"] == 1
+
+
+def test_caching_can_be_disabled():
+    client = FakeClient()
+    ClaudeLLM(client=client, cache_system=False).complete("SYS", "design the architecture")
+    assert "cache_control" not in client.messages.calls[0]["system"][0]
+
+
+def test_custom_models_and_effort():
+    client = FakeClient()
+    ClaudeLLM(
+        client=client, model="claude-opus-4-8", effort="medium",
+    ).complete("s", "analyze the strategy")
+    sent = client.messages.calls[0]
+    assert sent["model"] == "claude-opus-4-8"
+    assert sent["output_config"] == {"effort": "medium"}
+
+
+def test_extract_text_skips_non_text_blocks():
+    resp = types.SimpleNamespace(content=[
+        types.SimpleNamespace(type="thinking", thinking="..."),
+        types.SimpleNamespace(type="text", text="answer"),
+    ])
+    assert _extract_text(resp) == "answer"
+
+
+def test_engine_runs_on_claude_adapter():
+    # The whole engine drives the adapter just like any LLM.
+    client = FakeClient("Compressed, grounded answer for the directive.")
+    monarch = Monarch(llm=ClaudeLLM(client=client))
+    task = monarch.run("tighten this proposal")
+    assert task.shipped is True
+    assert "grounded" in task.final_output
+    assert client.messages.calls  # the model was actually called

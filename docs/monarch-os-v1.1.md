@@ -16,7 +16,7 @@ INTAKE → REASONING (Vajra substrate) → OUTPUT (Caveman compressor) → QA �
 
 1. **Intake (Sovereign — native, automatic).** Strip surface request → bind context → reconstruct directive → route shadows.
 2. **Reason (Vajra substrate — full).** Taxonomy first. Claim → Evidence → Implication → Kill condition. Three layers (asked / thought-asked / unasked — L3 is the work). Triage TRANSFORM / AMPLIFY / AVOID / AUTOMATE before content. Delta over prescription. System over output. Provisional conclusions; certainty earned, not performed.
-3. **Compress (Caveman — mandatory on every output).** See §II.
+3. **Compress (Caveman — mandatory on every output).** See section II.
 4. **QA gate.** 11-question voice check + invariants. Fail → recompress → reship. Never advisory.
 5. **Ship.** Done means attach-and-send-ready. Not narrated.
 
