@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Monarch OS v1.1 — Architecture</title>
+<style>
+  :root {
+    --bg: #0f1115;
+    --panel: #171a21;
+    --panel-2: #1e222b;
+    --ink: #e7e9ee;
+    --muted: #9aa3b2;
+    --line: #2c313c;
+    --gold: #d8b15a;
+    --intake: #5aa9e6;
+    --reason: #9d7cf0;
+    --caveman: #e6915a;
+    --qa: #e65a7c;
+    --ship: #5ad6a0;
+    --code: #c8d0dc;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font: 15px/1.55 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    padding: 40px 20px 80px;
+  }
+  .wrap { max-width: 1080px; margin: 0 auto; }
+  header { text-align: center; margin-bottom: 36px; }
+  h1 { font-size: 30px; margin: 0 0 6px; letter-spacing: .3px; }
+  h1 .crown { color: var(--gold); }
+  header p { color: var(--muted); margin: 0; }
+  .tagline {
+    margin-top: 14px; font-size: 14px; color: var(--gold);
+    border: 1px solid var(--line); border-radius: 999px;
+    display: inline-block; padding: 6px 16px; background: var(--panel);
+  }
+  h2 {
+    font-size: 13px; text-transform: uppercase; letter-spacing: 1.5px;
+    color: var(--muted); margin: 48px 0 18px; font-weight: 600;
+  }
+
+  /* Pipeline */
+  .pipeline { display: flex; align-items: stretch; gap: 0; flex-wrap: wrap; }
+  .stage {
+    flex: 1 1 170px; background: var(--panel); border: 1px solid var(--line);
+    border-top: 3px solid var(--accent); border-radius: 10px; padding: 16px;
+    position: relative; min-width: 170px;
+  }
+  .stage + .arrow { align-self: center; color: var(--muted); font-size: 22px; padding: 0 6px; }
+  .stage .num {
+    font-size: 12px; color: var(--accent); font-weight: 700; letter-spacing: 1px;
+  }
+  .stage h3 { margin: 4px 0 8px; font-size: 17px; }
+  .stage .file { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 11.5px; color: var(--accent); }
+  .stage ul { margin: 10px 0 0; padding-left: 16px; color: var(--muted); font-size: 13px; }
+  .stage li { margin: 3px 0; }
+  .det { position: absolute; top: 14px; right: 14px; font-size: 10px; padding: 2px 7px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); }
+  .det.code { color: var(--ship); border-color: rgba(90,214,160,.4); }
+  .det.model { color: var(--reason); border-color: rgba(157,124,240,.4); }
+
+  .s-intake { --accent: var(--intake); }
+  .s-reason { --accent: var(--reason); }
+  .s-caveman { --accent: var(--caveman); }
+  .s-qa { --accent: var(--qa); }
+  .s-ship { --accent: var(--ship); }
+
+  .flow-note { text-align: center; color: var(--muted); margin-top: 18px; font-size: 13px; }
+  .flow-note b { color: var(--ink); }
+  .loop {
+    margin: 16px auto 0; max-width: 520px; text-align: center; font-size: 13px;
+    color: var(--qa); border: 1px dashed rgba(230,90,124,.5); border-radius: 8px; padding: 10px;
+  }
+
+  /* Generic grid panels */
+  .grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+  .card {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 18px;
+  }
+  .card h4 { margin: 0 0 10px; font-size: 15px; color: var(--gold); }
+  .card ol, .card ul { margin: 0; padding-left: 18px; color: var(--muted); font-size: 13.5px; }
+  .card li { margin: 4px 0; }
+  .card li b { color: var(--ink); font-weight: 600; }
+
+  /* Caveman detail */
+  .caveman-box { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 20px; }
+  .two { display: grid; grid-template-columns: 1fr auto 1fr; gap: 18px; align-items: stretch; }
+  .col { background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px; padding: 14px; }
+  .col h5 { margin: 0 0 8px; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }
+  .col.before h5 { color: var(--qa); }
+  .col.after h5 { color: var(--ship); }
+  .col pre {
+    margin: 0; white-space: pre-wrap; font-family: ui-monospace, Menlo, monospace;
+    font-size: 12.5px; color: var(--code); line-height: 1.5;
+  }
+  .mid-arrow { align-self: center; color: var(--caveman); font-size: 26px; }
+  .strike { color: var(--qa); text-decoration: line-through; opacity: .75; }
+  .keep { color: var(--ship); }
+
+  .tiers { display: flex; gap: 12px; margin-top: 16px; flex-wrap: wrap; }
+  .tier { flex: 1 1 200px; border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; background: var(--panel-2); }
+  .tier b { color: var(--caveman); }
+  .tier span { display: block; color: var(--muted); font-size: 12.5px; margin-top: 3px; }
+
+  .pills { display: flex; flex-wrap: wrap; gap: 8px; }
+  .pill {
+    font-size: 12px; padding: 5px 11px; border-radius: 999px;
+    background: var(--panel-2); border: 1px solid var(--line); color: var(--muted);
+  }
+  .pill.gold { color: var(--gold); border-color: rgba(216,177,90,.4); }
+
+  .ledger { font-size: 12.5px; color: var(--muted); }
+  footer { margin-top: 56px; text-align: center; color: var(--muted); font-size: 12px; border-top: 1px solid var(--line); padding-top: 20px; }
+  code.inline { font-family: ui-monospace, Menlo, monospace; background: var(--panel-2); padding: 1px 6px; border-radius: 4px; color: var(--code); font-size: 12.5px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1><span class="crown">👑</span> Monarch OS <span style="color:var(--gold)">v1.1</span></h1>
+    <p>Cognitive architecture — visual map of the implementation</p>
+    <div class="tagline">Reasoning stays full · Output compresses · Nothing ships until QA passes</div>
+  </header>
+
+  <!-- PIPELINE -->
+  <h2>The Pipeline · every prompt, every response</h2>
+  <div class="pipeline">
+    <div class="stage s-intake">
+      <span class="det code">deterministic</span>
+      <div class="num">STAGE 1</div>
+      <h3>Intake</h3>
+      <div class="file">intake.py</div>
+      <ul>
+        <li>Strip surface request</li>
+        <li>Bind context</li>
+        <li>Reconstruct directive</li>
+        <li>Route Shadow Fleet</li>
+      </ul>
+    </div>
+    <div class="arrow">→</div>
+    <div class="stage s-reason">
+      <span class="det model">needs LLM</span>
+      <div class="num">STAGE 2</div>
+      <h3>Reasoning</h3>
+      <div class="file">reason.py · Vajra</div>
+      <ul>
+        <li>Taxonomy first</li>
+        <li>Claim→Evidence→Implication→Kill</li>
+        <li>3 layers (L3 = the work)</li>
+        <li>Full depth, no compression</li>
+      </ul>
+    </div>
+    <div class="arrow">→</div>
+    <div class="stage s-caveman">
+      <span class="det code">deterministic</span>
+      <div class="num">STAGE 3</div>
+      <h3>Caveman</h3>
+      <div class="file">caveman.py</div>
+      <ul>
+        <li>Strip filler</li>
+        <li>Ban exclamation + forbidden register</li>
+        <li>Preserve code/paths/URLs</li>
+        <li>Tier select</li>
+      </ul>
+    </div>
+    <div class="arrow">→</div>
+    <div class="stage s-qa">
+      <span class="det code">deterministic</span>
+      <div class="num">STAGE 4</div>
+      <h3>QA Gate</h3>
+      <div class="file">qa.py</div>
+      <ul>
+        <li>11-question voice check</li>
+        <li>+ invariants</li>
+        <li>Hard stop, never advisory</li>
+        <li>Fail → recompress</li>
+      </ul>
+    </div>
+    <div class="arrow">→</div>
+    <div class="stage s-ship">
+      <span class="det code">deterministic</span>
+      <div class="num">STAGE 5</div>
+      <h3>Ship</h3>
+      <div class="file">pipeline.py</div>
+      <ul>
+        <li>Ships only if QA passed</li>
+        <li>Invariant 17</li>
+        <li>= attach-and-send-ready</li>
+      </ul>
+    </div>
+  </div>
+  <div class="loop">↺ QA fail → escalate tier (Full → Ultra) → recompress → re-check &nbsp;(up to <code class="inline">max_qa_attempts</code>)</div>
+  <p class="flow-note"><b>Reasoning stays full. Output compresses.</b> Never trade accuracy for brevity.</p>
+
+  <!-- CONSTITUTION -->
+  <h2>Sealed Constitution · constitution.py</h2>
+  <div class="grid">
+    <div class="card">
+      <h4>Five Laws</h4>
+      <ol>
+        <li>Taxonomy before response</li>
+        <li>Chain: Claim→Evidence→Implication→Kill condition</li>
+        <li>Three layers: asked / thought-asked / unasked</li>
+        <li>Delta over prescription</li>
+        <li>System over output</li>
+      </ol>
+    </div>
+    <div class="card">
+      <h4>Eight Constants</h4>
+      <ul style="list-style:none; padding-left:0;">
+        <li>Accumulator</li>
+        <li>Ethical Core</li>
+        <li>Monozone Operator</li>
+        <li>First-Principles Architect</li>
+        <li>Precision Commercial Thinker</li>
+        <li>Reluctant System-Builder of People</li>
+        <li>Self-Aware Machine</li>
+        <li>Ancient Strategist</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>Conflict Resolution</h4>
+      <ul>
+        <li><b>Caveman vs Vajra</b> → Vajra wins on substance, Caveman wins on length</li>
+        <li><b>Monarch vs anything</b> → Monarch arbitrates; no shadow/filter/skill holds final rights</li>
+      </ul>
+      <p style="color:var(--muted); font-size:12.5px; margin:12px 0 0;">Laws, Constants &amp; Core are non-amendable. Tamper attempts → refusal + breach notation.</p>
+    </div>
+  </div>
+
+  <!-- CAVEMAN DEEP DIVE -->
+  <h2>Caveman · the binding output layer</h2>
+  <div class="caveman-box">
+    <div class="two">
+      <div class="col before">
+        <h5>Draft (from Vajra)</h5>
+<pre><span class="strike">Sure! I'd be happy to help with this great question.</span>
+
+Retention dipped after the v2 onboarding change.
+Root cause: the new email step added friction at signup.
+Fix: restore the one-click path; instrument <span class="keep">`/signup`</span>.
+
+<span class="strike">Hope this helps!</span></pre>
+      </div>
+      <div class="mid-arrow">⇒</div>
+      <div class="col after">
+        <h5>Shipped (compressed)</h5>
+<pre>Retention dipped after the v2 onboarding change.
+Root cause: the new email step added friction at signup.
+Fix: restore the one-click path; instrument <span class="keep">`/signup`</span>.</pre>
+      </div>
+    </div>
+    <p style="color:var(--muted); font-size:13px; margin:14px 0 0;">
+      Filler opener &amp; closer removed · exclamation banned · <span class="keep">code path <code class="inline">/signup</code> preserved byte-for-byte</span> · substance untouched.
+    </p>
+
+    <div class="tiers">
+      <div class="tier"><b>Full</b> <span>Default. Fragments + full substance. Technical / analytical.</span></div>
+      <div class="tier"><b>Lite</b> <span>Filler-only removal. Emotional / crisis register, or override.</span></div>
+      <div class="tier"><b>Ultra</b> <span>Telegraphic. Only on explicit <code class="inline">tl;dr</code> / ultra ask.</span></div>
+    </div>
+
+    <p style="margin:18px 0 8px; color:var(--muted); font-size:12px; text-transform:uppercase; letter-spacing:1px;">Forbidden register (hard ban)</p>
+    <div class="pills">
+      <span class="pill">sovereign</span><span class="pill">weapon</span>
+      <span class="pill">entropy substrate</span><span class="pill">recursive degradation</span>
+      <span class="pill">transcends</span><span class="pill">mythic framing</span>
+      <span class="pill">manifesto voice</span><span class="pill">motivational cadence</span>
+      <span class="pill">"let me unpack"</span><span class="pill">"great question"</span>
+      <span class="pill gold">exclamation marks</span>
+    </div>
+    <p style="color:var(--muted); font-size:12.5px; margin:14px 0 0;">
+      Content-bearing forbidden terms that survive compression are <b style="color:var(--qa)">not deleted silently</b> — QA blocks the ship instead.
+    </p>
+  </div>
+
+  <!-- DATA FLOW -->
+  <h2>State · what flows through</h2>
+  <div class="card">
+    <p style="color:var(--muted); font-size:13.5px; margin:0 0 10px;">A single <code class="inline">PipelineState</code> threads every stage. Nothing is overwritten — the final object is a full audit trail (<code class="inline">state.trace()</code>).</p>
+    <div class="pills">
+      <span class="pill" style="color:var(--intake)">raw_request</span>
+      <span class="pill" style="color:var(--intake)">context</span>
+      <span class="pill" style="color:var(--intake)">directive</span>
+      <span class="pill" style="color:var(--intake)">routed_shadows</span>
+      <span class="pill" style="color:var(--intake)">register</span>
+      <span class="pill" style="color:var(--reason)">reasoning</span>
+      <span class="pill" style="color:var(--reason)">draft</span>
+      <span class="pill" style="color:var(--caveman)">tier</span>
+      <span class="pill" style="color:var(--caveman)">output</span>
+      <span class="pill" style="color:var(--qa)">qa (passed / failures)</span>
+      <span class="pill" style="color:var(--ship)">shipped</span>
+    </div>
+  </div>
+
+  <!-- FAITHFUL VS DERIVED -->
+  <h2>Faithful vs. derived</h2>
+  <div class="grid">
+    <div class="card">
+      <h4 style="color:var(--ship)">✓ Faithful to spec</h4>
+      <ul>
+        <li>Pipeline order &amp; gating</li>
+        <li>Five Laws / Constants / 18 Invariants</li>
+        <li>Caveman rules, tiers, forbidden register</li>
+        <li>Byte-for-byte substance preservation</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4 style="color:var(--caveman)">~ Derived / extensible</h4>
+      <ul>
+        <li><b>11 QA questions</b> — spec gives the count + Voice test, not the verbatim 11. Derived in <code class="inline">qa.VOICE_CHECKS</code>.</li>
+        <li><b>Shadow routing</b> — roster named, internals unspecified. Keyword map in <code class="inline">intake._SHADOW_KEYWORDS</code>.</li>
+      </ul>
+    </div>
+  </div>
+
+  <footer>
+    Monarch OS v1.1 — Alfred 3.1 (kernel) + Vajra 4.0 (substrate) + Caveman (compressor).<br/>
+    Spec: <code class="inline">docs/monarch-os-v1.1.md</code> · Code: <code class="inline">monarch/</code> · Tests: 21 passing.
+  </footer>
+</div>
+</body>
+</html>
