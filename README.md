@@ -1,8 +1,25 @@
-# 👑 Monarch OS — v1.1 (working implementation)
+# Shadow OS — Capability-First Cognitive Engine
 
-A code implementation of the **Monarch OS** cognitive architecture. The spec
-(source of truth) lives in [`docs/monarch-os-v1.1.md`](docs/monarch-os-v1.1.md);
-this package turns it into a runnable pipeline.
+> **Canonical spec:** [`docs/shadow-os-v4.md`](docs/shadow-os-v4.md) ·
+> **Visual map:** [`docs/architecture.html`](docs/architecture.html) ·
+> **Code↔spec map:** [`docs/reconciliation-v1.1-to-v4.md`](docs/reconciliation-v1.1-to-v4.md)
+
+**Shadow OS v4** is a capability-first agent cognitive layer: 7 shadows
+(Thresher, Aegis, Axiom, Analyst, Quill, Ira) orchestrated by **Monarch**, each
+running one loop — **Perception → Memory → Reasoning → Action**. It runs *on top
+of* an AIOS-style kernel; it is not itself AIOS (see spec §8).
+
+**Status:** the spec (v4) is canonical. The code in `monarch/` currently
+implements **Monarch OS v1.1** — a single-agent pipeline that is a *subset* of
+v4, being evolved into the full 7-shadow engine. See the reconciliation note for
+exactly what maps where and what's missing.
+
+---
+
+## Monarch OS v1.1 — the current code (a v4 subset)
+
+A runnable single-agent pipeline. Its stages become primitives inside v4
+(Caveman → Thresher compression; QA → release-gate; Vajra → the Reasoning stage).
 
 ```
 INTAKE → REASONING (Vajra) → OUTPUT (Caveman) → QA → SHIP
