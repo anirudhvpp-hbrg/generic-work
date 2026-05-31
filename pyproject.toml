@@ -1,0 +1,25 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "monarch-os"
+version = "1.1.0"
+description = "Monarch OS v1.1 — a working implementation of the cognitive pipeline (Intake -> Vajra -> Caveman -> QA -> Ship)"
+readme = "README.md"
+requires-python = ">=3.10,<3.12"
+license = { text = "MIT" }
+keywords = ["monarch", "cognitive-architecture", "llm", "pipeline", "compression"]
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest"]
+
+[project.scripts]
+monarch = "monarch.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["monarch"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
