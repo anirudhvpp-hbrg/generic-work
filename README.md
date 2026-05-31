@@ -115,8 +115,39 @@ len(k2.memory)                             # rehydrated from disk
 k2.memory.search("retention drop")         # [(key, record, score), ...]
 ```
 
-Remaining kernel work: a true vector backend for `search`, and preemptive
-concurrency in the scheduler.
+### Notion-backed memory + embedding search
+
+Memory can live in a **Notion database** instead of a local file — browsable and
+editable in the same workspace as the specs. `NotionStorage` is a drop-in for the
+disk store, and an `embedder` upgrades `search` from token overlap to **cosine
+similarity over embeddings** (true semantic recall).
+
+```python
+from kernel import Kernel, NotionStorage, HttpNotionTransport, VoyageEmbedder
+from shadow_os import Monarch
+
+kernel = Kernel(
+    storage=NotionStorage("YOUR_DATABASE_ID", HttpNotionTransport()),  # NOTION_TOKEN env
+    embedder=VoyageEmbedder(),                                          # VOYAGE_API_KEY env
+)
+Monarch(kernel=kernel).run("research why retention dropped")
+kernel.memory.search("why did churn rise")     # semantic — matches without shared words
+```
+
+- **Embedders are pluggable** (`embed(text) -> list[float]`): `HashEmbedder`
+  (offline, deterministic, no key — the default/fallback) or `VoyageEmbedder`
+  (real semantics; Anthropic has no embeddings API, so Voyage is the partner).
+  OpenAI or a local model drop in the same way.
+- **Notion transport is injectable**: `HttpNotionTransport` (live, standard-library
+  HTTP) or `InMemoryNotionTransport` (offline tests). Tests use the in-memory one,
+  so CI never touches the network.
+
+**To go live** you provide: a Notion integration **token** (`NOTION_TOKEN`), a
+**database ID** with a `Key` (title) and `Payload` (rich_text) property, and —
+for real embeddings — `VOYAGE_API_KEY`. Without them the engine runs offline on
+disk + `HashEmbedder` exactly as before.
+
+Remaining kernel work: preemptive concurrency in the scheduler.
 
 ---
 

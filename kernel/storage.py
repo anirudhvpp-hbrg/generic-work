@@ -81,11 +81,23 @@ class StorageManager:
 
 
 class MemoryManager:
-    """Capacity-bounded, durable memory with LRU eviction and semantic search."""
+    """Capacity-bounded, durable memory with LRU eviction and semantic search.
 
-    def __init__(self, capacity: int = 128, storage: Optional[StorageManager] = None) -> None:
+    Pass an ``embedder`` (anything with ``embed(text) -> list[float]``) to rank
+    recall by cosine similarity over embeddings; without one, ``search`` falls
+    back to token overlap. Embeddings are stored on each record, so they persist
+    and rehydrate alongside the text.
+    """
+
+    def __init__(
+        self,
+        capacity: int = 128,
+        storage: Optional[Any] = None,
+        embedder: Optional[Any] = None,
+    ) -> None:
         self.capacity = max(1, capacity)
         self.storage = storage or StorageManager()
+        self.embedder = embedder
         self._lru: "OrderedDict[str, Dict[str, Any]]" = OrderedDict()
         self.evicted: List[str] = []
         self._seq = 0
@@ -117,6 +129,8 @@ class MemoryManager:
 
     def write(self, key: str, text: str, meta: Optional[Dict[str, Any]] = None) -> None:
         record = {"text": text, "meta": meta or {}, "seq": self._seq}
+        if self.embedder is not None:
+            record["embedding"] = self.embedder.embed(text)
         self._seq += 1
         if key in self._lru:
             self._lru.move_to_end(key)
@@ -133,12 +147,16 @@ class MemoryManager:
     # --- retrieval ---------------------------------------------------------
 
     def search(self, query: str, k: int = 3) -> List[Tuple[str, Dict[str, Any], float]]:
-        """Token-overlap relevance search. Returns up to ``k`` (key, record, score).
+        """Relevance search. Returns up to ``k`` (key, record, score).
 
-        Dependency-free stand-in for vector retrieval: scores by the fraction of
-        query tokens present in each record's text. A real embedding backend can
-        replace this method without changing callers.
+        With an ``embedder`` configured, ranks by cosine similarity over
+        embeddings (true semantic recall). Otherwise falls back to token overlap.
         """
+        if self.embedder is not None:
+            return self._search_embeddings(query, k)
+        return self._search_overlap(query, k)
+
+    def _search_overlap(self, query: str, k: int) -> List[Tuple[str, Dict[str, Any], float]]:
         q = set(_TOKEN.findall(query.lower()))
         if not q:
             return []
@@ -150,6 +168,22 @@ class MemoryManager:
             overlap = len(q & tokens) / len(q)
             if overlap > 0:
                 scored.append((key, record, round(overlap, 3)))
+        scored.sort(key=lambda t: t[2], reverse=True)
+        return scored[:k]
+
+    def _search_embeddings(self, query: str, k: int) -> List[Tuple[str, Dict[str, Any], float]]:
+        from kernel.embeddings import cosine
+
+        qv = self.embedder.embed(query)
+        scored = []
+        for key, record in self._lru.items():
+            ev = record.get("embedding")
+            if ev is None:
+                ev = self.embedder.embed(record["text"])
+                record["embedding"] = ev
+            score = cosine(qv, ev)
+            if score > 0:
+                scored.append((key, record, round(score, 4)))
         scored.sort(key=lambda t: t[2], reverse=True)
         return scored[:k]
 

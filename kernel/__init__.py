@@ -24,11 +24,17 @@ from kernel.storage import StorageManager, MemoryManager
 from kernel.tools import ToolManager, Tool
 from kernel.access import AccessManager, AccessDenied
 from kernel.boot import boot_shadow_os
+from kernel.embeddings import Embedder, HashEmbedder, VoyageEmbedder, cosine
+from kernel.notion_storage import (
+    NotionStorage, HttpNotionTransport, InMemoryNotionTransport,
+)
 
 __all__ = [
     "Kernel", "LLMCore", "Scheduler", "ContextManager",
     "StorageManager", "MemoryManager", "ToolManager", "Tool",
     "AccessManager", "AccessDenied", "boot_shadow_os",
+    "Embedder", "HashEmbedder", "VoyageEmbedder", "cosine",
+    "NotionStorage", "HttpNotionTransport", "InMemoryNotionTransport",
 ]
 
 __version__ = "0.1.0"

@@ -28,12 +28,15 @@ class Kernel:
         llm: Optional[LLM] = None,
         storage_path: Optional[str] = None,
         memory_capacity: int = 128,
+        storage: Optional[Any] = None,
+        embedder: Optional[Any] = None,
     ):
         self.llm_core = LLMCore(llm)
         self.scheduler = Scheduler()
         self.context = ContextManager()
-        self.storage = StorageManager(storage_path)
-        self.memory = MemoryManager(memory_capacity, self.storage)
+        # A custom backend (e.g. NotionStorage) takes precedence over a path.
+        self.storage = storage if storage is not None else StorageManager(storage_path)
+        self.memory = MemoryManager(memory_capacity, self.storage, embedder=embedder)
         self.tools = ToolManager()
         self.access = AccessManager()
 
