@@ -211,7 +211,31 @@ python examples/run_demo.py
 ## Wiring a real model
 
 The reasoning stage is model-agnostic (Invariant 11). Pass anything with
-`complete(system, user) -> str`:
+`complete(system, user) -> str`.
+
+**Claude (built-in adapter):**
+
+```bash
+pip install -e ".[claude]"        # installs the anthropic SDK
+export ANTHROPIC_API_KEY=sk-ant-...
+python examples/run_with_claude.py "tighten this proposal deck"
+```
+
+```python
+from shadow_os import Monarch
+from monarch.claude_llm import ClaudeLLM
+
+monarch = Monarch(llm=ClaudeLLM())   # Claude Opus 4.8, adaptive thinking
+task = monarch.run("draft the Hexaware proposal summary")
+```
+
+`ClaudeLLM` defaults to **Opus 4.8** with adaptive thinking and `effort: "high"`,
+and **caches each shadow's (stable) system prompt** (`cache_control: ephemeral`)
+so repeated calls reuse the cached prefix. Tune via
+`ClaudeLLM(model=..., effort=..., max_tokens=...)`; usage is tracked on
+`llm.usage`.
+
+**Any other provider:**
 
 ```python
 from monarch import Monarch, CallableLLM
