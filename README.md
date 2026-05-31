@@ -16,6 +16,48 @@ by v4 as primitives. See the reconciliation note for the full map.
 
 ---
 
+## Run Monarch OS locally (start here)
+
+**Monarch OS** is the umbrella runtime — it boots the kernel (durable local
+memory), runs the Shadow OS engine inside it, and uses Claude automatically when
+`ANTHROPIC_API_KEY` is set (offline `MockLLM` otherwise).
+
+```bash
+pip install -e .                 # no dependencies; Python 3.10–3.11
+
+# interactive shell
+python -m monarchos
+#  monarch-os> research why retention dropped
+#  monarch-os> /personal      (toggle the personal shadow, Ira)
+#  monarch-os> /status        /trace      /quit
+
+# one-shot
+python -m monarchos "tighten this bloated proposal deck"
+
+# force offline + show the audit trail
+python -m monarchos --offline --trace "draft the launch note"
+```
+
+To run against a real model, just export a key first:
+
+```bash
+pip install -e ".[claude]"
+export ANTHROPIC_API_KEY=sk-ant-...
+python -m monarchos "research why retention dropped"   # Sonnet 4.6 / Haiku for clear tasks
+```
+
+Memory persists to `~/.monarchos/state.json` by default (override with
+`--state PATH`, or `--ephemeral` to disable). Embed it in code:
+
+```python
+from monarchos import boot
+rt = boot()                       # durable local memory; Claude if a key is set
+task = rt.run("draft the Hexaware proposal summary")
+print(task.final_output)
+```
+
+---
+
 ## Shadow OS v4 — the engine (`shadow_os/`)
 
 7 shadows orchestrated by Monarch, each running **Perception → Memory →
