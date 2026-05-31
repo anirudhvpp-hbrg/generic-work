@@ -225,15 +225,17 @@ python examples/run_with_claude.py "tighten this proposal deck"
 from shadow_os import Monarch
 from monarch.claude_llm import ClaudeLLM
 
-monarch = Monarch(llm=ClaudeLLM())   # Claude Opus 4.8, adaptive thinking
+monarch = Monarch(llm=ClaudeLLM())   # Sonnet 4.6 default, Haiku for clear tasks
 task = monarch.run("draft the Hexaware proposal summary")
 ```
 
-`ClaudeLLM` defaults to **Opus 4.8** with adaptive thinking and `effort: "high"`,
-and **caches each shadow's (stable) system prompt** (`cache_control: ephemeral`)
-so repeated calls reuse the cached prefix. Tune via
-`ClaudeLLM(model=..., effort=..., max_tokens=...)`; usage is tracked on
-`llm.usage`.
+`ClaudeLLM` **tiers by task**: **Sonnet 4.6** (adaptive thinking, `effort:
+"high"`) for normal work, and **Haiku 4.5** for clear, simple prompts (short and
+free of complexity markers — Haiku omits `effort`/`thinking`, which it doesn't
+accept). It **caches each shadow's (stable) system prompt** (`cache_control:
+ephemeral`) so repeated calls reuse the cached prefix. Tune via
+`ClaudeLLM(model=..., simple_model=..., auto_tier=False, effort=..., max_tokens=...)`;
+per-model usage is tracked on `llm.usage`.
 
 **Any other provider:**
 

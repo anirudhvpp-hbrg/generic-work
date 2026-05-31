@@ -47,32 +47,58 @@ def test_complete_returns_text_and_records_usage():
     assert llm.usage["cache_read_input_tokens"] == 8
 
 
-def test_request_uses_opus_adaptive_effort_and_cached_system():
+def test_complex_task_uses_sonnet_with_adaptive_effort_and_cached_system():
     client = FakeClient()
     llm = ClaudeLLM(client=client)
-    llm.complete("SYS", "USER")
+    llm.complete("SYS", "design the system architecture for billing")
     sent = client.messages.calls[0]
-    assert sent["model"] == "claude-opus-4-8"
+    assert sent["model"] == "claude-sonnet-4-6"            # default tier
     assert sent["thinking"] == {"type": "adaptive"}
     assert sent["output_config"] == {"effort": "high"}
-    # system is a cached text block
     assert sent["system"][0]["text"] == "SYS"
     assert sent["system"][0]["cache_control"] == {"type": "ephemeral"}
-    # user message shape
-    assert sent["messages"] == [{"role": "user", "content": "USER"}]
+    assert sent["messages"] == [{"role": "user", "content": "design the system architecture for billing"}]
+
+
+def test_clear_task_routes_to_haiku_without_thinking_or_effort():
+    client = FakeClient()
+    llm = ClaudeLLM(client=client)
+    llm.complete("SYS", "fix this typo")                    # short + no complexity markers
+    sent = client.messages.calls[0]
+    assert sent["model"] == "claude-haiku-4-5"
+    # Haiku 4.5 rejects effort + adaptive thinking, so they must be omitted.
+    assert "thinking" not in sent
+    assert "output_config" not in sent
+
+
+def test_auto_tier_off_always_uses_default_model():
+    client = FakeClient()
+    ClaudeLLM(client=client, auto_tier=False).complete("SYS", "fix this typo")
+    assert client.messages.calls[0]["model"] == "claude-sonnet-4-6"
+
+
+def test_usage_tracks_per_model():
+    client = FakeClient()
+    llm = ClaudeLLM(client=client)
+    llm.complete("s", "fix typo")                          # haiku
+    llm.complete("s", "analyze the retention decline")     # sonnet
+    assert llm.usage["by_model"]["claude-haiku-4-5"] == 1
+    assert llm.usage["by_model"]["claude-sonnet-4-6"] == 1
 
 
 def test_caching_can_be_disabled():
     client = FakeClient()
-    ClaudeLLM(client=client, cache_system=False).complete("SYS", "USER")
+    ClaudeLLM(client=client, cache_system=False).complete("SYS", "design the architecture")
     assert "cache_control" not in client.messages.calls[0]["system"][0]
 
 
-def test_custom_model_and_effort():
+def test_custom_models_and_effort():
     client = FakeClient()
-    ClaudeLLM(client=client, model="claude-sonnet-4-6", effort="medium").complete("s", "u")
+    ClaudeLLM(
+        client=client, model="claude-opus-4-8", effort="medium",
+    ).complete("s", "analyze the strategy")
     sent = client.messages.calls[0]
-    assert sent["model"] == "claude-sonnet-4-6"
+    assert sent["model"] == "claude-opus-4-8"
     assert sent["output_config"] == {"effort": "medium"}
 
 
