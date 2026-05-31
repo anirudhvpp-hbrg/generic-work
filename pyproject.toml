@@ -4,12 +4,12 @@ build-backend = "hatchling.build"
 
 [project]
 name = "monarch-os"
-version = "1.1.0"
-description = "Monarch OS v1.1 — a working implementation of the cognitive pipeline (Intake -> Vajra -> Caveman -> QA -> Ship)"
+version = "4.0.0"
+description = "Monarch OS — local runtime with the Shadow OS capability-first cognitive engine operating within it"
 readme = "README.md"
 requires-python = ">=3.10,<3.12"
 license = { text = "MIT" }
-keywords = ["monarch", "cognitive-architecture", "llm", "pipeline", "compression"]
+keywords = ["monarch", "shadow-os", "cognitive-architecture", "agents", "llm"]
 dependencies = []
 
 [project.optional-dependencies]
@@ -17,11 +17,12 @@ dev = ["pytest"]
 claude = ["anthropic"]
 
 [project.scripts]
-monarch = "monarch.cli:main"
+monarch-os = "monarchos.cli:main"
 shadow-os = "shadow_os.cli:main"
+monarch = "monarch.cli:main"
 
 [tool.hatch.build.targets.wheel]
-packages = ["monarch", "shadow_os", "kernel"]
+packages = ["monarchos", "shadow_os", "kernel", "monarch"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
