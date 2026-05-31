@@ -17,9 +17,10 @@ dev = ["pytest"]
 
 [project.scripts]
 monarch = "monarch.cli:main"
+shadow-os = "shadow_os.cli:main"
 
 [tool.hatch.build.targets.wheel]
-packages = ["monarch"]
+packages = ["monarch", "shadow_os"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

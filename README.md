@@ -9,10 +9,55 @@
 running one loop — **Perception → Memory → Reasoning → Action**. It runs *on top
 of* an AIOS-style kernel; it is not itself AIOS (see spec §8).
 
-**Status:** the spec (v4) is canonical. The code in `monarch/` currently
-implements **Monarch OS v1.1** — a single-agent pipeline that is a *subset* of
-v4, being evolved into the full 7-shadow engine. See the reconciliation note for
-exactly what maps where and what's missing.
+**Status:** the spec (v4) is canonical and the engine is implemented in
+`shadow_os/`. The older `monarch/` package implements **Monarch OS v1.1** — a
+single-agent pipeline whose stages (Caveman, QA, the model interface) are reused
+by v4 as primitives. See the reconciliation note for the full map.
+
+---
+
+## Shadow OS v4 — the engine (`shadow_os/`)
+
+7 shadows orchestrated by Monarch, each running **Perception → Memory →
+Reasoning → Action**. Capability-first: shadows are configured by data
+(capabilities, deployment triggers, guardrails), not hardcoded personas.
+
+```python
+from shadow_os import Monarch
+
+monarch = Monarch()                       # offline MockLLM by default
+task = monarch.run("tighten this bloated proposal deck")
+
+print(task.final_output)   # ratified by Thresher's gate, then shipped
+print(task.trace())        # task_class, loadout, γ, RSI artifacts, governance
+```
+
+```bash
+python -m shadow_os.cli "research why retention dropped" --trace
+python -m shadow_os.cli --personal "I'm stuck on how to approach the launch"
+python examples/run_engine.py      # routes 5 directives across the fleet
+```
+
+**What it does, mapped to the spec:**
+
+| Piece | Module | Spec |
+|-------|--------|------|
+| Monarch orchestrator (reconstruct → classify → route → sequence → ratify → log) | `shadow_os/monarch.py` | §3 |
+| 4-stage loop (capability-first base) | `shadow_os/shadows/base.py` | §2 |
+| 7 shadows (Thresher, Aegis, Axiom, Analyst, Quill, Ira) | `shadow_os/shadows/` | §4 |
+| Regex-first router + task classifier | `shadow_os/router.py` | §7.1–7.2 |
+| Memory: SKB / TKL / decision ledger | `shadow_os/memory.py` | §2, §7 |
+| Task entity + RSI + governance | `shadow_os/task.py` | §7 |
+| 8 Governing Invariants + Socratic gate | `shadow_os/invariants.py` | §1, §3 |
+
+**Decisions baked in:** gating is consolidated in **Thresher** (§9.1); **Ira** is
+personal-only and never enters a non-personal loadout (§9.4); Caveman is reused
+as Thresher's compression primitive (not duplicated). Invariant 7 (Monarch
+absolute) is enforced — nothing ships unless Thresher's gate ratifies it; every
+run emits RSI dual-output (Invariant 6).
+
+**Not yet built:** the AIOS-style kernel tier (scheduler / context / memory+storage
+/ tool / access managers, §8, §9.2). The current Memory is an in-process slice.
 
 ---
 
