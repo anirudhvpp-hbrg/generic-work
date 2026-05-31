@@ -1,4 +1,4 @@
-"""The 8 Governing Invariants of Shadow OS v4 (spec §1).
+"""The 8 Governing Invariants of Shadow OS v4 (spec section 1).
 
 Data, not behaviour. The orchestrator references these; tests assert the engine
 upholds the enforceable ones (notably 6 RSI dual-output and 7 Monarch absolute).
@@ -17,7 +17,7 @@ INVARIANTS = (
     "Compression-before-deposit: nothing bloated enters the knowledge store.",
 )
 
-# 5-question Socratic self-interrogation gate (spec §3, run before classification).
+# 5-question Socratic self-interrogation gate (spec section 3, run before classification).
 SOCRATIC_GATE = (
     "What is actually being asked, beneath the surface request?",
     "What must be true for this to succeed (the unasked third layer)?",

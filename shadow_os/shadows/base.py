@@ -1,4 +1,4 @@
-"""The Shadow base — capability-first, runs the 4-stage loop (spec §2).
+"""The Shadow base — capability-first, runs the 4-stage loop (spec section 2).
 
 A Shadow is configured by *data* (capabilities, deployment_triggers, guardrails),
 not by a hardcoded persona (Invariant 1). The base implements the shared loop:
@@ -97,7 +97,7 @@ class Shadow:
         )
 
     def _self_critique(self, draft: str) -> str:
-        # Lightweight, deterministic self-check (mandatory before Action, §2).
+        # Lightweight, deterministic self-check (mandatory before Action, section 2).
         flags = []
         if len(draft.strip()) < 20:
             flags.append("thin output")
@@ -106,7 +106,7 @@ class Shadow:
         return "; ".join(flags) if flags else "passes self-critique"
 
     def _confidence(self, task: Task, draft: str) -> float:
-        # Confidence matched to evidence tier (spec §2). Heuristic baseline:
+        # Confidence matched to evidence tier (spec section 2). Heuristic baseline:
         # longer, critique-clean drafts on System2 tasks score higher.
         base = 0.6 if draft.strip() else 0.0
         if "passes self-critique" in self._self_critique(draft):

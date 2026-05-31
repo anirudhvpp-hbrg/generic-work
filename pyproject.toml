@@ -20,7 +20,7 @@ monarch = "monarch.cli:main"
 shadow-os = "shadow_os.cli:main"
 
 [tool.hatch.build.targets.wheel]
-packages = ["monarch", "shadow_os"]
+packages = ["monarch", "shadow_os", "kernel"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

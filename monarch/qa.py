@@ -1,10 +1,10 @@
-"""Stage 4 — QA gate (spec §0.4): 11-question voice check + invariants.
+"""Stage 4 — QA gate (spec section 0.4): 11-question voice check + invariants.
 
 The spec mandates an "11-question voice check + invariants" and that QA is a
 hard stop, never advisory: on failure -> recompress -> reship. The spec states
 the *Voice test* but does not enumerate the 11 questions verbatim, so the 11
-checks below are derived from the Voice section (§III), the Caveman rules (§II),
-and the relevant Invariants (§V 17, 18). They are deliberately mechanical so QA
+checks below are derived from the Voice section (section III), the Caveman rules (section II),
+and the relevant Invariants (section V 17, 18). They are deliberately mechanical so QA
 can actually gate. Treat ``VOICE_CHECKS`` as the configurable spec point.
 """
 
@@ -74,7 +74,7 @@ def _no_recap_closer(text: str, state: PipelineState) -> bool:
 
 
 def _single_idea_density(text: str, state: PipelineState) -> bool:
-    # Voice §III: short sentences, one idea each. Flag run-on sentences.
+    # Voice section III: short sentences, one idea each. Flag run-on sentences.
     sentences = re.split(r"(?<=[.?])\s+", re.sub(r"```.*?```", "", text,
                                                  flags=re.DOTALL))
     return all(len(s.split()) <= 60 for s in sentences if s.strip())
@@ -97,7 +97,7 @@ def _word_load_bearing(text: str, state: PipelineState) -> bool:
     )
 
 
-# The 11 derived voice/invariant questions (spec §0.4).
+# The 11 derived voice/invariant questions (spec section 0.4).
 VOICE_CHECKS: List[Check] = [
     ("substance_present", _has_substance),
     ("no_forbidden_register", _no_forbidden_register),

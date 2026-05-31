@@ -1,4 +1,4 @@
-"""Ira — Approach Redirection (spec §4.6). Personal-only; operates on the operator.
+"""Ira — Approach Redirection (spec section 4.6). Personal-only; operates on the operator.
 
 Ira does not produce technical artifacts — it redirects *thinking about*
 problems. Its Stillness Gate asks "advice or wisdom?" before any output, and it

@@ -1,6 +1,6 @@
-"""Aegis — Commercial & Standards Engine (spec §4.2).
+"""Aegis — Commercial & Standards Engine (spec section 4.2).
 
-Per decision §9.1, Aegis does NOT own release gating (that is Thresher). Aegis
+Per decision section 9.1, Aegis does NOT own release gating (that is Thresher). Aegis
 owns commercial engineering, IP/framework architecture, and standards *install*
 (building the architecture that makes the gate progressively unnecessary). It
 classifies work through the Commercial Triage Matrix before any function runs.
@@ -39,7 +39,7 @@ class Aegis(Shadow):
     )
 
     def reason(self, task: Task, perception: str, recalled: str) -> Reasoning:
-        # Commercial Triage Matrix (spec §4.2): classify before any function runs.
+        # Commercial Triage Matrix (spec section 4.2): classify before any function runs.
         triage = self._triage(perception)
         task.context["aegis_triage"] = triage
         reasoning = super().reason(task, perception, recalled)

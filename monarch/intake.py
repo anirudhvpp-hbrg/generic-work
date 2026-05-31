@@ -1,4 +1,4 @@
-"""Stage 1 — Sovereign Intake (spec §0.1).
+"""Stage 1 — Sovereign Intake (spec section 0.1).
 
 Strip surface request -> bind context -> reconstruct directive -> route shadows.
 

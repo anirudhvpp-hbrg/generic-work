@@ -1,9 +1,9 @@
-"""Cognitive Routing (spec §7.1–7.2): regex-first, zero-API-cost dispatch.
+"""Cognitive Routing (spec section 7.1–7.2): regex-first, zero-API-cost dispatch.
 
 ``TaskClassifier`` maps a raw directive to a task-class with regex rules.
 ``ShadowRouter`` maps a task-class to a shadow loadout (primary + support) via a
 deterministic dispatch table — no LLM call to route. Unmatched input falls back
-to ``general`` (Monarch governs). Ira is personal-only (Invariant / spec §9.4):
+to ``general`` (Monarch governs). Ira is personal-only (Invariant / spec section 9.4):
 it is never placed in a loadout unless ``context["personal"]`` is set.
 """
 
@@ -24,7 +24,7 @@ _CLASS_RULES: List[Tuple[str, "re.Pattern"]] = [
 ]
 
 # task_class -> (primary, [support...]). Capability-first: Thresher fronts most
-# external work (everything enters the gate first, spec §4.1).
+# external work (everything enters the gate first, spec section 4.1).
 _DISPATCH: Dict[str, Tuple[str, List[str]]] = {
     "research":      ("analyst",  ["thresher"]),
     "architecture":  ("axiom",    ["thresher", "quill"]),
@@ -48,7 +48,7 @@ class ShadowRouter:
     def loadout(self, task_class: str, personal: bool = False) -> List[str]:
         primary, support = _DISPATCH.get(task_class, _DISPATCH["general"])
         order = [primary, *support]
-        # Ira is personal-only — strip from any non-personal loadout (§9.4).
+        # Ira is personal-only — strip from any non-personal loadout (section 9.4).
         if not personal:
             order = [s for s in order if s != "ira"]
         # If stripping Ira emptied the loadout, Monarch governs via Thresher.

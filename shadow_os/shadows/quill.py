@@ -1,4 +1,4 @@
-"""Quill — Artifact Production (spec §4.5). The surface the client sees."""
+"""Quill — Artifact Production (spec section 4.5). The surface the client sees."""
 
 from __future__ import annotations
 

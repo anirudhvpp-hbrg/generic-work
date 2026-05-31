@@ -7,7 +7,7 @@
 **Shadow OS v4** is a capability-first agent cognitive layer: 7 shadows
 (Thresher, Aegis, Axiom, Analyst, Quill, Ira) orchestrated by **Monarch**, each
 running one loop — **Perception → Memory → Reasoning → Action**. It runs *on top
-of* an AIOS-style kernel; it is not itself AIOS (see spec §8).
+of* an AIOS-style kernel; it is not itself AIOS (see spec section 8).
 
 **Status:** the spec (v4) is canonical and the engine is implemented in
 `shadow_os/`. The older `monarch/` package implements **Monarch OS v1.1** — a
@@ -42,22 +42,62 @@ python examples/run_engine.py      # routes 5 directives across the fleet
 
 | Piece | Module | Spec |
 |-------|--------|------|
-| Monarch orchestrator (reconstruct → classify → route → sequence → ratify → log) | `shadow_os/monarch.py` | §3 |
-| 4-stage loop (capability-first base) | `shadow_os/shadows/base.py` | §2 |
-| 7 shadows (Thresher, Aegis, Axiom, Analyst, Quill, Ira) | `shadow_os/shadows/` | §4 |
-| Regex-first router + task classifier | `shadow_os/router.py` | §7.1–7.2 |
-| Memory: SKB / TKL / decision ledger | `shadow_os/memory.py` | §2, §7 |
-| Task entity + RSI + governance | `shadow_os/task.py` | §7 |
-| 8 Governing Invariants + Socratic gate | `shadow_os/invariants.py` | §1, §3 |
+| Monarch orchestrator (reconstruct → classify → route → sequence → ratify → log) | `shadow_os/monarch.py` | section 3 |
+| 4-stage loop (capability-first base) | `shadow_os/shadows/base.py` | section 2 |
+| 7 shadows (Thresher, Aegis, Axiom, Analyst, Quill, Ira) | `shadow_os/shadows/` | section 4 |
+| Regex-first router + task classifier | `shadow_os/router.py` | section 7.1–7.2 |
+| Memory: SKB / TKL / decision ledger | `shadow_os/memory.py` | section 2, section 7 |
+| Task entity + RSI + governance | `shadow_os/task.py` | section 7 |
+| 8 Governing Invariants + Socratic gate | `shadow_os/invariants.py` | section 1, section 3 |
 
-**Decisions baked in:** gating is consolidated in **Thresher** (§9.1); **Ira** is
-personal-only and never enters a non-personal loadout (§9.4); Caveman is reused
+**Decisions baked in:** gating is consolidated in **Thresher** (section 9.1); **Ira** is
+personal-only and never enters a non-personal loadout (section 9.4); Caveman is reused
 as Thresher's compression primitive (not duplicated). Invariant 7 (Monarch
 absolute) is enforced — nothing ships unless Thresher's gate ratifies it; every
 run emits RSI dual-output (Invariant 6).
 
-**Not yet built:** the AIOS-style kernel tier (scheduler / context / memory+storage
-/ tool / access managers, §8, §9.2). The current Memory is an in-process slice.
+---
+
+## The kernel — resource layer (`kernel/`)
+
+The cognitive engine decides *which shadow reasons about what*. The kernel is the
+AIOS-style resource layer beneath it: it decides *which request gets LLM, memory,
+tools* and enforces per-agent access. Shadow OS runs **on** this kernel.
+
+| Manager | Module | Role |
+|---------|--------|------|
+| LLM Core | `kernel/llm_core.py` | One shared model across agents, with usage accounting |
+| Scheduler | `kernel/scheduler.py` | Priority ordering of dispatched agent jobs |
+| Context Manager | `kernel/context.py` | Snapshot / restore an agent's loop state on context-switch |
+| Storage + Memory | `kernel/storage.py` | JSON-persistable store + LRU-bounded memory |
+| Tool Manager | `kernel/tools.py` | Unified tool registry the Action stage calls into |
+| Access Manager | `kernel/access.py` | Per-agent permissions |
+
+```python
+from kernel import Kernel
+from shadow_os import Monarch
+
+kernel = Kernel()
+monarch = Monarch(kernel=kernel)        # boots the fleet onto the kernel
+task = monarch.run("draft the proposal summary")
+
+kernel.llm_core.usage()                 # {'calls': 3, ...} — shared, accounted
+len(kernel.memory)                      # shipped output persisted
+```
+
+```bash
+python examples/run_on_kernel.py        # full stack: accounting, access, scheduler
+```
+
+When Monarch is given a kernel, shadow completions go through the shared LLM
+Core, each shadow is access-checked before it runs, its loop state is
+snapshotted, and shipped output is persisted to kernel memory. The concrete
+access example is enforced: the commercial agent (Aegis) may touch pipeline
+data, the personal agent (Ira) may not.
+
+This turns the stack from a cognitive layer alone into a cognitive layer running
+on a real (if in-process) resource kernel. Backing the managers with durable
+infrastructure (disk/vector DB, true preemption) is the remaining step.
 
 ---
 
@@ -152,7 +192,7 @@ spec names but does not fully enumerate are explicit extension points:
 
 - **The 11 QA questions** — the spec mandates "11-question voice check" and
   states the Voice test but doesn't list the 11 verbatim. `qa.VOICE_CHECKS`
-  derives 11 mechanical checks from §II/§III/§V; edit that list to match your
+  derives 11 mechanical checks from section II/section III/section V; edit that list to match your
   canonical questions.
 - **Shadow routing** — the Shadow Fleet roster is named in `constitution.py`;
   routing internals aren't specified, so `intake._SHADOW_KEYWORDS` is a simple

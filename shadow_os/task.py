@@ -1,4 +1,4 @@
-"""The Task entity and run artifacts (spec §7 data model).
+"""The Task entity and run artifacts (spec section 7 data model).
 
 ``Task`` generalizes the v1.1 ``PipelineState``: it carries a directive through
 Sovereign Reconstruction, routing, the shadow loadout's loops, and ratification —
@@ -38,7 +38,7 @@ class RSIArtifact:
 
 @dataclass
 class GovernanceEntry:
-    """One line of the governance trail (spec §7 Governance Log)."""
+    """One line of the governance trail (spec section 7 Governance Log)."""
 
     trigger: str
     action: str
@@ -68,7 +68,7 @@ class Task:
     raw_input: str = ""
     context: Dict[str, Any] = field(default_factory=dict)
 
-    # Sovereign Reconstruction (Monarch, §3)
+    # Sovereign Reconstruction (Monarch, section 3)
     reconstructed_intent: str = ""
     beliefs: List[str] = field(default_factory=list)
     gamma: Gamma = Gamma.SYSTEM2

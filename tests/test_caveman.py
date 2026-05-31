@@ -1,4 +1,4 @@
-"""Tests for the Caveman compressor (spec §II) — run with `pytest`."""
+"""Tests for the Caveman compressor (spec section II) — run with `pytest`."""
 
 import os
 import sys

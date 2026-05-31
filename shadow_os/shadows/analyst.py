@@ -1,4 +1,4 @@
-"""Analyst — Analysis & Research Synthesis (spec §4.4). The evidence spine."""
+"""Analyst — Analysis & Research Synthesis (spec section 4.4). The evidence spine."""
 
 from __future__ import annotations
 

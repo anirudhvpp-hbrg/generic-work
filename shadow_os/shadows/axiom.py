@@ -1,4 +1,4 @@
-"""Axiom — Solution & Program Architecture (spec §4.3)."""
+"""Axiom — Solution & Program Architecture (spec section 4.3)."""
 
 from __future__ import annotations
 

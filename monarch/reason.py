@@ -1,4 +1,4 @@
-"""Stage 2 — Vajra reasoning substrate (spec §0.2).
+"""Stage 2 — Vajra reasoning substrate (spec section 0.2).
 
 Reasoning stays full; only the *output* compresses. This stage builds a Vajra
 system prompt from the Constitution and asks the LLM to think in the mandated

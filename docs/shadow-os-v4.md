@@ -14,7 +14,7 @@
 
 Shadow OS is a **capability-first agent cognitive layer**. Refactored from a 13-persona fleet into **7 shadows**, where **names are deprecated lineage and capabilities are the unit of account**. Every shadow runs the same four-stage cognitive loop — **Perception → Memory → Reasoning → Action**. **Monarch** is the orchestrator/kernel: it routes, sequences, ratifies, and holds absolute veto.
 
-It is **not** AIOS. It is the *agent/cognitive layer* that runs *on top of* an AIOS-style kernel (see §8). The Monarch Command Center (MCC, §7) is the concrete runtime that makes it executable.
+It is **not** AIOS. It is the *agent/cognitive layer* that runs *on top of* an AIOS-style kernel (see section 8). The Monarch Command Center (MCC, section 7) is the concrete runtime that makes it executable.
 
 **The roster at a glance:**
 
@@ -47,7 +47,7 @@ It is **not** AIOS. It is the *agent/cognitive layer* that runs *on top of* an A
 
 ## 2. THE COGNITIVE ENGINE — Four-Stage Loop
 
-Every shadow dynamically loops through four stages until Reasoning declares the goal met (Monarch holds termination veto). This maps onto the MCC's 5-layer processing flow (§7).
+Every shadow dynamically loops through four stages until Reasoning declares the goal met (Monarch holds termination veto). This maps onto the MCC's 5-layer processing flow (section 7).
 
 | Stage | Function | MCC layer mapping |
 |---|---|---|
@@ -389,7 +389,7 @@ React+Vite+Tailwind (cockpit) · Node+Express (kernel) · Claude API / Anthropic
 ## 9. OPEN DECISIONS (carry into next conversation)
 
 1. **Standards overlap.** Quality/gate capability lives in two hosts — Thresher (release-gate QA-0…8) and Aegis (content-conscience A13–A15). Either keep split (Thresher gates *outbound release*; Aegis holds *inbound conceptual/content* standards) or consolidate all gate functions under Thresher and leave Aegis purely commercial + IP/framework.
-2. **Kernel tier.** Decide whether to build the missing AIOS-style kernel (§8) to make this a true OS rather than a cognitive layer alone.
+2. **Kernel tier.** Decide whether to build the missing AIOS-style kernel (section 8) to make this a true OS rather than a cognitive layer alone.
 3. **Notion write-back.** Whether to publish this as the canonical replacement page (non-destructive — new page, deletions recorded as lineage-retired, nothing overwritten until approved).
 4. **Ira scope.** Confirm Ira stays personal-only and never enters client-facing loadouts.
 5. **Genius re-entry rule.** If innovation/ideation ever needs a standalone home again, define the evidence threshold that would reverse its deletion.
@@ -399,7 +399,7 @@ React+Vite+Tailwind (cockpit) · Node+Express (kernel) · Claude API / Anthropic
 ## 10. HOW TO USE THIS FILE IN A NEW CONVERSATION
 
 > Paste or attach this file and say:
-> *"This is the canonical Shadow OS v4 spec. Operate within the invariants (§1), run the 4-stage cognitive engine (§2) orchestrated by Monarch (§3), and use the 7-shadow roster with the deep profiles in §4 — respecting capabilities-not-names. The runtime is the MCC in §7. Open decisions are in §9. Help me with [task]."*
+> *"This is the canonical Shadow OS v4 spec. Operate within the invariants (section 1), run the 4-stage cognitive engine (section 2) orchestrated by Monarch (section 3), and use the 7-shadow roster with the deep profiles in section 4 — respecting capabilities-not-names. The runtime is the MCC in section 7. Open decisions are in section 9. Help me with [task]."*
 
 The model then has full fidelity on: the laws, the cognitive engine + its MCC layer mapping, every shadow's substrate/mental-models/modes/moves/guardrails, the evidence base, the lineage map, the runtime data model, the AIOS distinction, and what's still undecided.
 

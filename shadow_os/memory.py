@@ -1,9 +1,9 @@
-"""The Memory stage backing store (spec §2 Memory, §7 data model).
+"""The Memory stage backing store (spec section 2 Memory, section 7 data model).
 
 In-process implementation: SKB triplets (state->action->next_state), TKL entries
 (task_class -> the loadout that worked), and a decision ledger. This is the thin,
-app-specific slice the spec (§8) notes would be backed by an AIOS Memory/Storage
-Manager in a true kernel build. Persistence is a later concern (§9.2).
+app-specific slice the spec (section 8) notes would be backed by an AIOS Memory/Storage
+Manager in a true kernel build. Persistence is a later concern (section 9.2).
 
 Invariant 8 (compression-before-deposit) is enforced at the deposit boundary:
 units are compressed via the Caveman primitive before they enter the store.

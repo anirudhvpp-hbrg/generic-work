@@ -1,4 +1,4 @@
-"""Caveman — the binding output layer (spec §II).
+"""Caveman — the binding output layer (spec section II).
 
 Deterministic compression applied to every shipped response. Rules implemented
 here come straight from the spec:
@@ -119,7 +119,7 @@ def _strip_filler_closers(text: str) -> str:
 
 
 def detect_register(text: str) -> Register:
-    """Coarse register detection to drive tier selection (spec §II)."""
+    """Coarse register detection to drive tier selection (spec section II)."""
     lowered = text.lower()
     crisis = ("suicid", "self-harm", "kill myself", "want to die", "panic attack")
     emotional = ("i feel", "i'm scared", "i am scared", "anxious", "grieving",
@@ -132,7 +132,7 @@ def detect_register(text: str) -> Register:
 
 
 def select_tier(register: Register, override: bool, ultra: bool = False) -> Tier:
-    """Auto tier selection (spec §II 'Tier selection').
+    """Auto tier selection (spec section II 'Tier selection').
 
     - Emotional / crisis register -> Lite (filler-only removal, keep warmth).
     - Explicit ultra request -> Ultra.

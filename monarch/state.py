@@ -8,7 +8,7 @@ from typing import Any, Dict, List, Optional
 
 
 class Tier(str, Enum):
-    """Caveman compression tier (spec §II)."""
+    """Caveman compression tier (spec section II)."""
 
     FULL = "full"
     LITE = "lite"
@@ -25,7 +25,7 @@ class Register(str, Enum):
 
 @dataclass
 class QAReport:
-    """Result of the QA gate (spec §0.4)."""
+    """Result of the QA gate (spec section 0.4)."""
 
     passed: bool = False
     failures: List[str] = field(default_factory=list)
@@ -47,24 +47,24 @@ class PipelineState:
     raw_request: str = ""
     context: Dict[str, Any] = field(default_factory=dict)
 
-    # Intake outputs (§0.1)
+    # Intake outputs (section 0.1)
     directive: str = ""
     routed_shadows: List[str] = field(default_factory=list)
     register: Register = Register.TECHNICAL
     override_active: bool = False
 
-    # Reasoning outputs (§0.2)
+    # Reasoning outputs (section 0.2)
     reasoning: str = ""
 
-    # Output stages (§0.2 draft -> §0.3 compressed)
+    # Output stages (section 0.2 draft -> section 0.3 compressed)
     draft: str = ""
     tier: Tier = Tier.FULL
     output: str = ""
 
-    # QA (§0.4)
+    # QA (section 0.4)
     qa: QAReport = field(default_factory=QAReport)
 
-    # Ship (§0.5)
+    # Ship (section 0.5)
     shipped: bool = False
 
     def trace(self) -> Dict[str, Any]:

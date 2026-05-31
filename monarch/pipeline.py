@@ -1,4 +1,4 @@
-"""Monarch — the unified pipeline (spec §0).
+"""Monarch — the unified pipeline (spec section 0).
 
     INTAKE -> REASONING (Vajra) -> OUTPUT (Caveman) -> QA -> SHIP
 
@@ -41,7 +41,7 @@ class Monarch:
         # 2. Reason — full Vajra substrate.
         run_reasoning(state, self.llm)
 
-        # 3 + 4. Compress (Caveman) then QA, looping on failure (§0.4).
+        # 3 + 4. Compress (Caveman) then QA, looping on failure (section 0.4).
         ultra = bool(state.context.get("_ultra"))
         state.tier = select_tier(state.register, state.override_active, ultra=ultra)
 

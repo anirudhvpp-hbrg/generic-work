@@ -1,6 +1,6 @@
-"""Thresher — Critical-Reasoning Gate (spec §4.1).
+"""Thresher — Critical-Reasoning Gate (spec section 4.1).
 
-Consolidated gating lives here (decision §9.1): compression, release-gate QA,
+Consolidated gating lives here (decision section 9.1): compression, release-gate QA,
 risk, interrogation. Everything external enters Thresher first. Reuses the v1.1
 Caveman compressor as its compression primitive (reconciliation: reuse, don't
 rebuild).
@@ -67,7 +67,7 @@ class Thresher(Shadow):
     def gate(self, text: str) -> Tuple[bool, List[str]]:
         """Release-gate QA-0..8. Returns (passed, failures).
 
-        Blocks any artifact regardless of who approved it (spec §4.1).
+        Blocks any artifact regardless of who approved it (spec section 4.1).
         """
         failures: List[str] = []
         if not text or not text.strip():
